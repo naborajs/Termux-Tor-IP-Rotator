@@ -640,6 +640,44 @@ show_doc() {
     read -p "Press ENTER to continue..."
 }
 
+docs_screen() {
+
+    while true; do
+
+        clear
+
+        echo "=================================="
+        echo "      DOCUMENTATION CENTER"
+        echo "=================================="
+        echo
+        echo "1. Quick Start"
+        echo "0. Back"
+        echo
+
+        read -p "Choice: " doc_choice
+        echo "DEBUG: You entered [$doc_choice]"
+        sleep 3
+
+        case "$doc_choice" in
+
+            1)
+                show_doc "./docs/quickstart.txt"
+                ;;
+
+            0)
+                return
+                ;;
+
+            *)
+                echo "Invalid choice"
+                sleep 1
+                ;;
+
+        esac
+
+    done
+}
+
 about_screen() {
     banner
     echo -e "${BOLD}${CYAN}About – NS GAMMING GHOST ENGINE v4 (HYBRID)${RESET}"
