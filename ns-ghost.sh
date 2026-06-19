@@ -13,6 +13,9 @@ PRIVOXY_PORT=8118
 
 LOG_FILE="$BASE_DIR/tor_debug.log"
 IP_HISTORY=()
+LAST_IP=""
+DUPLICATE_COUNT=0
+MAX_DUPLICATES=5
 
 RED="\e[31m"
 GREEN="\e[32m"
@@ -26,12 +29,43 @@ DIM="\e[2m"
 
 banner() {
     clear
-    echo -e "${BLUE}${BOLD}┌────────────────────────────────────────────────┐${RESET}"
-    echo -e "${BLUE}${BOLD}│ 💙 NS GAMMING – GHOST ENGINE v4 (HYBRID) 💙 │${RESET}"
-    echo -e "${BLUE}${BOLD}│  Single Tor • Auto-Rotate • IP History • UI  │${RESET}"
-    echo -e "${BLUE}${BOLD}└────────────────────────────────────────────────┘${RESET}"
-    echo -e "${CYAN}${DIM}   Created for: NS GAMMING || Nishant Sarkar${RESET}"
+
+    echo -e "${GREEN}${BOLD}"
+    cat << "EOF"
+
+ ██████╗ ██╗  ██╗ ██████╗ ███████╗████████╗
+██╔════╝ ██║  ██║██╔═══██╗██╔════╝╚══██╔══╝
+██║  ███╗███████║██║   ██║███████╗   ██║
+██║   ██║██╔══██║██║   ██║╚════██║   ██║
+╚██████╔╝██║  ██║╚██████╔╝███████║   ██║
+ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝
+
+ ███████╗███╗   ██╗ ██████╗ ██╗███╗   ██╗███████╗
+ ██╔════╝████╗  ██║██╔════╝ ██║████╗  ██║██╔════╝
+ █████╗  ██╔██╗ ██║██║  ███╗██║██╔██╗ ██║█████╗
+ ██╔══╝  ██║╚██╗██║██║   ██║██║██║╚██╗██║██╔══╝
+ ███████╗██║ ╚████║╚██████╔╝██║██║ ╚████║███████╗
+ ╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝
+
+EOF
+    echo -e "${RESET}"
+
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}👻 GHOST ENGINE v5${RESET}  ${DIM}| Advanced TOR Identity Framework${RESET}"
+    echo -e "${BLUE}🌐 SOCKS5:${RESET} 127.0.0.1:${TOR_SOCKS_PORT}"
+    echo -e "${BLUE}🔒 CONTROL:${RESET} 127.0.0.1:${TOR_CONTROL_PORT}"
+    echo -e "${BLUE}⚡ PROXY:${RESET} 127.0.0.1:${PRIVOXY_PORT}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+    echo -e "${DIM}Created By:${RESET} ${GREEN}Naboraj Sarkar (Nishant)${RESET}"
+    echo -e "${DIM}Project:${RESET} ${GREEN}NS GAMING • Ghost Engine${RESET}"
     echo
+    echo -e "${GREEN}${DIM}$(date +"[%H:%M:%S]")${RESET} ${CYAN}Secure circuit initialized.${RESET}"
+    echo -e "${GREEN}${DIM}$(date +"[%H:%M:%S]")${RESET} ${CYAN}TOR identity framework loaded.${RESET}"
+    echo -e "${GREEN}${DIM}$(date +"[%H:%M:%S]")${RESET} ${CYAN}Privacy layer active.${RESET}"
+
+    echo
+    
 }
 
 matrix_line() {
@@ -112,6 +146,37 @@ remember_ip() {
     fi
 }
 
+check_duplicate_ip() {
+
+    local current_ip="$1"
+
+    [[ -z "$current_ip" ]] && return
+
+    if [[ "$current_ip" == "$LAST_IP" ]]; then
+        ((DUPLICATE_COUNT++))
+    else
+        DUPLICATE_COUNT=0
+    fi
+
+    LAST_IP="$current_ip"
+
+    if (( DUPLICATE_COUNT >= MAX_DUPLICATES )); then
+
+        echo
+        echo -e "${RED}[!] Same IP detected ${MAX_DUPLICATES} times.${RESET}"
+        echo -e "${YELLOW}[+] Restarting Tor engine...${RESET}"
+
+        pkill tor 2>/dev/null
+        pkill privoxy 2>/dev/null
+
+        sleep 3
+
+        start_tor_engine
+
+        DUPLICATE_COUNT=0
+    fi
+}
+
 show_ip_history() {
     echo -e "${CYAN}📜 IP History (this session):${RESET}"
     if (( ${#IP_HISTORY[@]} == 0 )); then
@@ -168,7 +233,7 @@ EOF
     fi
 
     cat <<EOF > "$PRIVOXY_CONF"
-listen-address 127.0.0.1:${PRIVOXY_PORT}
+listen-address 0.0.0.0:${PRIVOXY_PORT}
 toggle 1
 enable-remote-toggle 0
 enable-remote-http-toggle 0
@@ -303,6 +368,7 @@ smart_rotate_loop() {
         local IP
         IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
         remember_ip "$IP"
+        check_duplicate_ip "$IP"
 
         banner
         matrix_burst
@@ -310,6 +376,7 @@ smart_rotate_loop() {
         echo -e "${GREEN}Current Tor Exit IP: ${BOLD}${IP:-UNKNOWN}${RESET}"
         echo -e "${BLUE}Proxy: 127.0.0.1:${PRIVOXY_PORT}${RESET}"
         echo -e "${CYAN}Requested interval: ${T}s (sleep is exact).${RESET}"
+        echo -e "${YELLOW}Duplicate Count: ${DUPLICATE_COUNT}/${MAX_DUPLICATES}${RESET}"
         echo
         show_ip_history
         echo
