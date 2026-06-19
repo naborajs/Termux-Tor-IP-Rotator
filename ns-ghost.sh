@@ -52,6 +52,7 @@ KERNEL_VERSION="Unknown"
 
 UPTIME=0
 UPTIME_STRING="00h 00m 00s"
+HEALTH_SCORE=0
 
 SHOW_MATRIX=true
 SHOW_COLORS=true
@@ -196,7 +197,153 @@ detect_status() {
 
 }
 
+health_check() {
 
+    clear
+
+    detect_platform
+
+    local SCORE=0
+    local MAX_SCORE=6
+
+    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║                 HEALTH CHECK                      ║${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+    echo
+
+    echo -e "${YELLOW}[1/6] Checking Internet...${RESET}"
+
+    if curl -s --max-time 5 https://api64.ipify.org >/dev/null 2>&1; then
+
+        echo -e "${GREEN}[PASS] Internet Connection${RESET}"
+        ((SCORE++))
+
+    else
+
+        echo -e "${RED}[FAIL] Internet Connection${RESET}"
+
+    fi
+
+    echo
+
+    echo -e "${YELLOW}[2/6] Checking TOR Service...${RESET}"
+
+    if check_tor; then
+
+        echo -e "${GREEN}[PASS] TOR Service${RESET}"
+        ((SCORE++))
+
+    else
+
+        echo -e "${RED}[FAIL] TOR Service${RESET}"
+
+    fi
+
+    echo
+
+    echo -e "${YELLOW}[3/6] Checking HTTP Proxy...${RESET}"
+
+    if check_privoxy; then
+
+        echo -e "${GREEN}[PASS] Privoxy Service${RESET}"
+        ((SCORE++))
+
+    else
+
+        echo -e "${RED}[FAIL] Privoxy Service${RESET}"
+
+    fi
+
+    echo
+
+    echo -e "${YELLOW}[4/6] Checking SOCKS5 Port...${RESET}"
+
+    if nc -z 127.0.0.1 "$TOR_SOCKS_PORT" >/dev/null 2>&1; then
+
+        echo -e "${GREEN}[PASS] Port ${TOR_SOCKS_PORT}${RESET}"
+        ((SCORE++))
+
+    else
+
+        echo -e "${RED}[FAIL] Port ${TOR_SOCKS_PORT}${RESET}"
+
+    fi
+
+    echo
+
+    echo -e "${YELLOW}[5/6] Checking Control Port...${RESET}"
+
+    if nc -z 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1; then
+
+        echo -e "${GREEN}[PASS] Port ${TOR_CONTROL_PORT}${RESET}"
+        ((SCORE++))
+
+    else
+
+        echo -e "${RED}[FAIL] Port ${TOR_CONTROL_PORT}${RESET}"
+
+    fi
+
+    echo
+
+    echo -e "${YELLOW}[6/6] Checking Exit Node...${RESET}"
+
+    local EXIT_IP
+
+    EXIT_IP=$(curl \
+        --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+        --max-time 10 \
+        -s \
+        https://api64.ipify.org)
+
+    if [[ -n "$EXIT_IP" ]]; then
+
+        echo -e "${GREEN}[PASS] Exit IP Found${RESET}"
+        echo -e "Exit IP: ${CYAN}${EXIT_IP}${RESET}"
+
+        ((SCORE++))
+
+    else
+
+        echo -e "${RED}[FAIL] Exit Node Check${RESET}"
+
+    fi
+
+    echo
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+    HEALTH_SCORE=$(( SCORE * 100 / MAX_SCORE ))
+
+    echo
+    printf "%-20s %s\n" "Platform:" "$PLATFORM_NAME"
+    printf "%-20s %s\n" "Health Score:" "${HEALTH_SCORE}%"
+    printf "%-20s %s\n" "Passed:" "$SCORE/$MAX_SCORE"
+    printf "%-20s %s\n" "Current IP:" "${EXIT_IP:-UNKNOWN}"
+
+    echo
+
+    if (( HEALTH_SCORE == 100 )); then
+
+        echo -e "${GREEN}STATUS: EXCELLENT${RESET}"
+
+    elif (( HEALTH_SCORE >= 80 )); then
+
+        echo -e "${YELLOW}STATUS: GOOD${RESET}"
+
+    elif (( HEALTH_SCORE >= 50 )); then
+
+        echo -e "${YELLOW}STATUS: DEGRADED${RESET}"
+
+    else
+
+        echo -e "${RED}STATUS: CRITICAL${RESET}"
+
+    fi
+
+    echo
+    read -p $'Press ENTER to continue... ' _
+
+}
 
 banner() {
     clear
@@ -2044,21 +2191,49 @@ about_screen() {
 }
 
 main_menu() {
+
     while true; do
+
+        detect_platform
+        detect_status
+
+        clear
+
         banner
-        matrix_burst
+
+        [[ "$SHOW_MATRIX" == true ]] && matrix_burst
 
         echo
+
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        printf "%-18s %s\n" "Platform:" "$PLATFORM_NAME"
+        printf "%-18s %s\n" "TOR:" "$TOR_RUNNING"
+        printf "%-18s %s\n" "Proxy:" "$PROXY_RUNNING"
+        printf "%-18s %s\n" "Current IP:" "$CURRENT_IP"
+        printf "%-18s %s\n" "Uptime:" "$UPTIME_STRING"
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+        echo
+
         echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════════════════╗${RESET}"
         echo -e "${GREEN}║                         👻 GHOST ENGINE COMMAND CENTER                     ║${RESET}"
         echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
+
         echo -e "${GREEN}║${RESET} 1 ▶ Start Engine      2 🔄 Auto Rotate      3 ♻ Rotate Once              ${GREEN}║${RESET}"
-        echo -e "${GREEN}║${RESET} 4 🌍 Current IP       5 📜 Logs & Status    6 🌐 Torify URL             ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} 4 🌍 Current IP       5 📜 Status Center    6 🌐 Torify URL             ${GREEN}║${RESET}"
         echo -e "${GREEN}║${RESET} 7 🛡 Verify TOR       8 ❤️ Project Info     9 ⚙ Settings                ${GREEN}║${RESET}"
-        echo -e "${GREEN}║${RESET} D 📚 Documentation    A ℹ About            S ⛔ Stop Engine             ${GREEN}║${RESET}"
-        echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
-        echo -e "${GREEN}║${RESET} 0 ❌ Exit Ghost Engine                                            ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} H 🩺 Health Check     D 📚 Documentation    A ℹ About                   ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} S ⛔ Stop Engine      0 ❌ Exit Ghost Engine                             ${GREEN}║${RESET}"
+
         echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════════════════╝${RESET}"
+
+        echo
+
+        printf "%-18s %s\n" "Rotations:" "$TOTAL_ROTATIONS"
+        printf "%-18s %s\n" "Successes:" "$SUCCESS_COUNT"
+        printf "%-18s %s\n" "Errors:" "$ERROR_COUNT"
+        printf "%-18s %s\n" "Restarts:" "$RESTART_COUNT"
+
         echo
 
         echo -ne "${GREEN}ghost-engine${RESET}@${CYAN}root${RESET}:${YELLOW}~${RESET}$ "
@@ -2102,6 +2277,10 @@ main_menu() {
                 settings_menu
                 ;;
 
+            H|h)
+                health_check
+                ;;
+
             D|d)
                 docs_screen
                 ;;
@@ -2115,21 +2294,30 @@ main_menu() {
                 ;;
 
             0)
-                banner
+
+                clear
+
                 echo
-                echo -e "${GREEN}[SYSTEM] Ghost Engine Shutdown Complete${RESET}"
+                echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+                echo -e "${GREEN}Ghost Engine Shutdown Complete${RESET}"
                 echo -e "${CYAN}Thank you for using Ghost Engine 👻${RESET}"
+                echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
                 echo
+
                 exit 0
                 ;;
 
             *)
+
                 echo
                 echo -e "${RED}[ERROR] Unknown command.${RESET}"
-                echo -e "${YELLOW}[TIP] Available commands: 1-9, D, A, S, 0${RESET}"
+                echo -e "${YELLOW}[TIP] Available commands: 1-9, H, D, A, S, 0${RESET}"
+
                 sleep 2
                 ;;
+
         esac
+
     done
 }
 
