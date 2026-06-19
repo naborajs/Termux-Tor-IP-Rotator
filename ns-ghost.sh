@@ -13,32 +13,82 @@ PRIVOXY_PORT=8118
 
 LOG_FILE="$BASE_DIR/tor_debug.log"
 IP_HISTORY=()
+TOTAL_ROTATIONS=0
+SESSION_START=$(date +%s)
 LAST_IP=""
 DUPLICATE_COUNT=0
 MAX_DUPLICATES=5
 
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-BLUE="\e[34m"
-CYAN="\e[36m"
-MAG="\e[35m"
-RESET="\e[0m"
-BOLD="\e[1m"
+
+GREEN="\e[38;5;46m"
+CYAN="\e[38;5;51m"
+RED="\e[38;5;196m"
+YELLOW="\e[38;5;226m"
+PURPLE="\e[38;5;129m"
+BLUE="\e[38;5;39m"
 DIM="\e[2m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
+detect_platform() {
+
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        PLATFORM_NAME="🖥 WSL Ubuntu"
+        PROXY_HOST=$(hostname -I | awk '{print $1}')
+
+    elif command -v termux-info >/dev/null 2>&1; then
+        PLATFORM_NAME="📱 Termux"
+        PROXY_HOST="127.0.0.1"
+
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        PLATFORM_NAME="🍎 macOS"
+        PROXY_HOST="127.0.0.1"
+
+    else
+        PLATFORM_NAME="🐧 Linux"
+        PROXY_HOST="127.0.0.1"
+    fi
+}
+
+detect_status() {
+
+    if check_tor; then
+        TOR_STATUS="${GREEN}ONLINE${RESET}"
+    else
+        TOR_STATUS="${RED}OFFLINE${RESET}"
+    fi
+
+    if check_privoxy; then
+        PROXY_STATUS="${GREEN}ONLINE${RESET}"
+    else
+        PROXY_STATUS="${RED}OFFLINE${RESET}"
+    fi
+
+    CURRENT_IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+        -s https://api64.ipify.org 2>/dev/null)
+
+    [[ -z "$CURRENT_IP" ]] && CURRENT_IP="UNKNOWN"
+}
+
+
 
 banner() {
     clear
 
+    detect_platform
+    detect_status
     echo -e "${GREEN}${BOLD}"
     cat << "EOF"
 
- ██████╗ ██╗  ██╗ ██████╗ ███████╗████████╗
-██╔════╝ ██║  ██║██╔═══██╗██╔════╝╚══██╔══╝
-██║  ███╗███████║██║   ██║███████╗   ██║
-██║   ██║██╔══██║██║   ██║╚════██║   ██║
-╚██████╔╝██║  ██║╚██████╔╝███████║   ██║
- ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝
+ ▄████  ██░ ██  ▒█████    ██████ ▄▄▄█████▓
+██▒ ▀█▒▓██░ ██▒▒██▒  ██▒▒██    ▒ ▓  ██▒ ▓▒
+▒██░▄▄▄░▒██▀▀██░▒██░  ██▒░ ▓██▄   ▒ ▓██░ ▒░
+░▓█  ██▓░▓█ ░██ ▒██   ██░  ▒   ██▒░ ▓██▓ ░
+░▒▓███▀▒░▓█▒░██▓░ ████▓▒░▒██████▒▒  ▒██▒ ░
+ ░▒   ▒  ▒ ░░▒░▒░ ▒░▒░▒░ ▒ ▒▓▒ ▒ ░  ▒ ░░
+  ░   ░  ▒ ░▒░ ░  ░ ▒ ▒░ ░ ░▒  ░ ░    ░
+░ ░   ░  ░  ░░ ░░ ░ ░ ▒  ░  ░  ░    ░
+      ░  ░  ░  ░    ░ ░        ░
 
  ███████╗███╗   ██╗ ██████╗ ██╗███╗   ██╗███████╗
  ██╔════╝████╗  ██║██╔════╝ ██║████╗  ██║██╔════╝
@@ -50,22 +100,78 @@ banner() {
 EOF
     echo -e "${RESET}"
 
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${GREEN}👻 GHOST ENGINE v5${RESET}  ${DIM}| Advanced TOR Identity Framework${RESET}"
-    echo -e "${BLUE}🌐 SOCKS5:${RESET} 127.0.0.1:${TOR_SOCKS_PORT}"
-    echo -e "${BLUE}🔒 CONTROL:${RESET} 127.0.0.1:${TOR_CONTROL_PORT}"
-    echo -e "${BLUE}⚡ PROXY:${RESET} 127.0.0.1:${PRIVOXY_PORT}"
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}${BOLD}👻 GHOST ENGINE v5${RESET} ${DIM}| Advanced TOR Identity Framework${RESET}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║              SYSTEM STATUS PANEL                 ║${RESET}"
+    echo -e "${CYAN}╠════════════════════════════════════════════════════╣${RESET}"
 
-    echo -e "${DIM}Created By:${RESET} ${GREEN}Naboraj Sarkar (Nishant)${RESET}"
-    echo -e "${DIM}Project:${RESET} ${GREEN}NS GAMING • Ghost Engine${RESET}"
-    echo
-    echo -e "${GREEN}${DIM}$(date +"[%H:%M:%S]")${RESET} ${CYAN}Secure circuit initialized.${RESET}"
-    echo -e "${GREEN}${DIM}$(date +"[%H:%M:%S]")${RESET} ${CYAN}TOR identity framework loaded.${RESET}"
-    echo -e "${GREEN}${DIM}$(date +"[%H:%M:%S]")${RESET} ${CYAN}Privacy layer active.${RESET}"
+    printf "${CYAN}║${RESET} %-13s │ %-28s ${CYAN}║${RESET}\n" \
+    "PLATFORM" "$PLATFORM_NAME"
 
-    echo
+    printf "${CYAN}║${RESET} %-13s │ %-28b ${CYAN}║${RESET}\n" \
+    "TOR STATUS" "$TOR_STATUS"
+
+    printf "${CYAN}║${RESET} %-13s │ %-28b ${CYAN}║${RESET}\n" \
+    "PROXY" "$PROXY_STATUS"
+
+    printf "${CYAN}║${RESET} %-13s │ %-28s ${CYAN}║${RESET}\n" \
+    "EXIT IP" "$CURRENT_IP"
+
+    printf "${CYAN}║${RESET} %-13s │ %-28s ${CYAN}║${RESET}\n" \
+    "PROXY HOST" "${PROXY_HOST}:${PRIVOXY_PORT}"
+
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+
+    NOW=$(date +%s)
+    UPTIME=$((NOW - SESSION_START))
     
+    echo
+    echo -e "${PURPLE}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${PURPLE}║                 SESSION STATS                    ║${RESET}"
+    echo -e "${PURPLE}╠════════════════════════════════════════════════════╣${RESET}"
+
+    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
+    "ROTATIONS" "$TOTAL_ROTATIONS"
+
+    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
+    "IPS SAVED" "${#IP_HISTORY[@]}"
+
+    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
+    "DUPLICATES" "$DUPLICATE_COUNT/$MAX_DUPLICATES"
+
+    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
+    "UPTIME" "$(printf '%02dh %02dm %02ds' \
+    $((UPTIME/3600)) \
+    $(((UPTIME%3600)/60)) \
+    $((UPTIME%60)))"
+
+    echo -e "${PURPLE}╚════════════════════════════════════════════════════╝${RESET}"    
+
+    echo
+
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${CYAN}💡 Quick Tip:${RESET}"
+
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        echo -e "${GREEN}[INFO] WSL Environment Detected${RESET}"
+        echo
+        echo -e "Windows Proxy Setup:"
+        echo -e "  Host : ${PROXY_HOST}"
+        echo -e "  Port : ${PRIVOXY_PORT}"
+        echo
+        echo -e "Test TOR:"
+        echo -e "  curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} https://api64.ipify.org"
+    else
+        echo -e "Use Proxy:"
+        echo -e "Address: 127.0.0.1"
+        echo -e "Port: ${PRIVOXY_PORT}"
+    fi
+
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${DIM}Created By:${RESET} ${GREEN}Naboraj Sarkar (Nishant)${RESET}"
+    echo
 }
 
 matrix_line() {
@@ -432,18 +538,25 @@ main_menu() {
     while true; do
         banner
         matrix_burst
-        echo -e "${BOLD}${CYAN}Main Menu:${RESET}"
-        echo -e "${BLUE} 1${RESET} - Start / Restart Ghost Engine"
-        echo -e "${BLUE} 2${RESET} - Auto-Rotation Mode (Hybrid)"
-        echo -e "${BLUE} 3${RESET} - Single Rotate + Show IPs"
-        echo -e "${BLUE} 4${RESET} - Show Current IP + History"
-        echo -e "${BLUE} 5${RESET} - Show Status & Last Logs"
-        echo -e "${BLUE} 6${RESET} - Torify Single URL (curl via Tor)"
-        echo -e "${BLUE} 7${RESET} - About / Credits"
-        echo -e "${BLUE} 8${RESET} - Stop Tor + Proxy"
-        echo -e "${RED} 0${RESET} - Exit"
+
         echo
-        read -p "$(echo -e "${CYAN}Choice → ${RESET}")" choice
+        echo
+        echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════════════════╗${RESET}"
+        echo -e "${GREEN}║                         👻 GHOST ENGINE COMMAND CENTER                     ║${RESET}"
+        echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
+        echo -e "${GREEN}║${RESET} 1 ▶ Start Engine      2 🔄 Auto Rotate      3 ♻ Rotate Once              ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} 4 🌍 Current IP       5 📜 Logs & Status    6 📊 Dashboard               ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} 7 🛡 Verify TOR       8 📡 Proxy Guide      9 ⚙ Settings                ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} D 📚 Documentation    A ℹ About            S ⛔ Stop Engine             ${GREEN}║${RESET}"
+        echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
+        echo -e "${GREEN}║${RESET} 0 ❌ Exit                                                           ${GREEN}║${RESET}"
+        echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════════════════╝${RESET}"
+        echo        
+        echo
+
+        echo -ne "${GREEN}ghost-engine${RESET}@${CYAN}root${RESET}:${YELLOW}~${RESET}$ "
+        read choice
+
         case "$choice" in
             1) start_tor_engine ;;
             2) smart_rotate_loop ;;
@@ -453,8 +566,22 @@ main_menu() {
             6) torify_url ;;
             7) about_screen ;;
             8) stop_all ;;
-            0) banner; echo -e "${GREEN}Exiting Ghost Engine v4. Stay invisible 👻💙${RESET}"; exit 0 ;;
-            *) echo -e "${RED}[!] Invalid option.${RESET}"; sleep 1 ;;
+
+            0)
+                banner
+                echo
+                echo -e "${GREEN}[SYSTEM] Ghost Engine Shutdown Complete${RESET}"
+                echo -e "${CYAN}Stay Anonymous 👻${RESET}"
+                echo
+                exit 0
+                ;;
+
+            *)
+                echo
+                echo -e "${RED}[ERROR] Unknown command.${RESET}"
+                echo -e "${YELLOW}[TIP] Select a valid menu option.${RESET}"
+                sleep 2
+                ;;
         esac
     done
 }
