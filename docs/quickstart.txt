@@ -1,0 +1,16 @@
+GHOST ENGINE QUICK START
+
+1. Start Ghost Engine
+   ns-ghost
+
+2. Select:
+   1 -> Start Engine
+
+3. Verify TOR:
+   Option 7
+
+4. Check Current IP:
+   Option 4
+
+5. Stop Engine:
+   S
