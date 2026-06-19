@@ -73,10 +73,26 @@ chmod +x "$SCRIPT_NAME"
 mkdir -p "$BIN_DIR"
 cp "$SCRIPT_NAME" "$BIN_DIR/$INSTALL_NAME"
 chmod +x "$BIN_DIR/$INSTALL_NAME"
+if [[ "$PLATFORM" == "linux" ]]; then
+
+    mkdir -p "$HOME/.local/bin"
+
+    if ! grep -q '.local/bin' "$HOME/.bashrc" 2>/dev/null; then
+        echo '' >> "$HOME/.bashrc"
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+    fi
+
+fi
+install_dependencies
 
 echo
 echo -e "${GREEN}[+] Installation complete!${RESET}"
 echo -e "${CYAN}You can now run Ghost Engine with:${RESET}"
 echo -e "  ${BOLD}ns-ghost${RESET}"
 echo
-echo -e "${YELLOW}Tip:${RESET} If command not found, start a new Termux session."
+echo -e "${YELLOW}Tip:${RESET} Open a ${RED}${BOLD}NEW TERMINAL SESSION${RESET} and run:"
+echo -e "  ${BOLD}${INSTALL_NAME}${RESET}"
+
+if [[ "$PLATFORM" == "linux" ]]; then
+    source "$HOME/.bashrc" 2>/dev/null || true
+fi
