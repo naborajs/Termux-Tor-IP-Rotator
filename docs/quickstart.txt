@@ -1,16 +1,204 @@
-GHOST ENGINE QUICK START
+╔══════════════════════════════════════════════════════════════╗
+║                   GHOST ENGINE QUICK START                  ║
+╚══════════════════════════════════════════════════════════════╝
 
-1. Start Ghost Engine
-   ns-ghost
+WELCOME
 
-2. Select:
-   1 -> Start Engine
+Ghost Engine is a TOR-powered privacy toolkit that allows you to:
 
-3. Verify TOR:
-   Option 7
+• Route traffic through the TOR network
+• Rotate TOR identities
+• View TOR exit IPs
+• Verify TOR connectivity
+• Configure system/browser proxies
+• Monitor TOR status and logs
 
-4. Check Current IP:
-   Option 4
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-5. Stop Engine:
-   S
+STEP 1 — START GHOST ENGINE
+
+Launch the tool:
+
+```
+ns-ghost
+```
+
+or
+
+```
+./ns-ghost.sh
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2 — START THE ENGINE
+
+From the main menu:
+
+```
+1 ▶ Start Engine
+```
+
+Ghost Engine will:
+
+• Start TOR
+• Create a TOR control port
+• Start Privoxy
+• Configure the local proxy
+
+Wait until:
+
+```
+[+] Ghost Engine ONLINE
+```
+
+appears.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3 — VERIFY TOR IS WORKING
+
+From the main menu:
+
+```
+7 ▶ Verify TOR
+```
+
+Expected result:
+
+```
+TOR Status : VERIFIED
+```
+
+You should also see a TOR Exit IP.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4 — VIEW YOUR CURRENT TOR IP
+
+From the main menu:
+
+```
+4 ▶ Current IP
+```
+
+Ghost Engine will display:
+
+• Current TOR Exit IP
+• Session IP History
+
+Example:
+
+```
+185.xxx.xxx.xxx
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 5 — ROTATE YOUR IDENTITY
+
+Single Rotation:
+
+```
+3 ▶ Rotate Once
+```
+
+Automatic Rotation:
+
+```
+2 ▶ Auto Rotate
+```
+
+Recommended interval:
+
+```
+15 seconds
+```
+
+For maximum stability:
+
+```
+30-60 seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 6 — USE THE PROXY
+
+Default Proxy:
+
+```
+Host : 127.0.0.1
+Port : 8118
+```
+
+WSL Users:
+
+```
+Open:
+
+    8 ▶ Proxy Guide
+```
+
+for platform-specific instructions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON COMMANDS
+
+Check normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+Check TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+The two IPs should be different.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TROUBLESHOOTING
+
+TOR Offline
+
+```
+Restart Engine
+Option 1
+```
+
+Proxy Offline
+
+```
+Restart Engine
+Option 1
+```
+
+IP Not Changing
+
+```
+Use Auto Rotation
+Wait at least 10–15 seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEXT STEPS
+
+After Quick Start read:
+
+• WSL Guide
+• Linux Guide
+• Termux Guide
+• Proxy Guide
+• Commands Reference
+• Troubleshooting
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ghost Engine v5
+NS CODEX • Naboraj Sarkar (Nishant)
