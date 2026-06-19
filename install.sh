@@ -1,10 +1,21 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # NS GAMMING – GHOST ENGINE v4 Installer (Termux)
 
 set -e
 
-PREFIX="/data/data/com.termux/files/usr"
-BIN_DIR="$PREFIX/bin"
+if command -v termux-info >/dev/null 2>&1; then
+    PLATFORM="termux"
+    BIN_DIR="/data/data/com.termux/files/usr/bin"
+elif command -v apt >/dev/null 2>&1; then
+    PLATFORM="linux"
+    BIN_DIR="$HOME/.local/bin"
+elif command -v brew >/dev/null 2>&1; then
+    PLATFORM="mac"
+    BIN_DIR="/usr/local/bin"
+else
+    echo "Unsupported platform"
+    exit 1
+fi
 INSTALL_NAME="ns-ghost"
 SCRIPT_NAME="ns-ghost.sh"
 
@@ -15,17 +26,36 @@ CYAN="\e[36m"
 RESET="\e[0m"
 BOLD="\e[1m"
 
+install_dependencies() {
+
+    echo -e "${YELLOW}[+] Installing dependencies...${RESET}"
+
+    case "$PLATFORM" in
+
+        termux)
+            pkg update -y
+            pkg install -y tor privoxy curl netcat-openbsd
+        ;;
+
+        linux)
+            sudo apt update
+            sudo apt install -y tor privoxy curl netcat-openbsd
+        ;;
+
+        mac)
+            brew install tor privoxy curl netcat
+        ;;
+
+    esac
+
+}
+
 echo -e "${CYAN}${BOLD}┌──────────────────────────────────────────┐${RESET}"
 echo -e "${CYAN}${BOLD}│  NS GAMMING – GHOST ENGINE Installer   │${RESET}"
 echo -e "${CYAN}${BOLD}└──────────────────────────────────────────┘${RESET}"
 echo
 
-# 1) Basic Termux sanity check
-if [[ ! -d "$PREFIX" ]]; then
-  echo -e "${RED}[!] This installer is for Termux only.${RESET}"
-  echo -e "${YELLOW}    Detected no Termux prefix at:${RESET} $PREFIX"
-  exit 1
-fi
+echo -e "${CYAN}[+] Platform detected:${RESET} $PLATFORM"
 
 # 2) Check main script is present
 if [[ ! -f "$SCRIPT_NAME" ]]; then
