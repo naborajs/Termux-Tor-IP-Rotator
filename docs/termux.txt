@@ -1,0 +1,454 @@
+╔══════════════════════════════════════════════════════════════╗
+║                 GHOST ENGINE TERMUX GUIDE                   ║
+║                  Android + Termux Edition                  ║
+╚══════════════════════════════════════════════════════════════╝
+
+OVERVIEW
+
+This guide explains how to use Ghost Engine on Android
+using Termux.
+
+Ghost Engine allows you to:
+
+• Route traffic through TOR
+• Rotate TOR identities
+• Verify TOR connectivity
+• View TOR Exit IPs
+• Configure Android Proxy Settings
+• Use TOR with browsers and applications
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REQUIREMENTS
+
+Recommended:
+
+• Android 8+
+• Latest Termux
+• Stable Internet Connection
+• Battery Optimization Disabled
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSTALLATION
+
+Clone Repository:
+
+```
+git clone <repository-url>
+```
+
+Enter Directory:
+
+```
+cd Termux-Tor-IP-Rotator
+```
+
+Run Installer:
+
+```
+bash install.sh
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STARTING GHOST ENGINE
+
+Launch:
+
+```
+ns-ghost
+```
+
+or
+
+```
+./ns-ghost.sh
+```
+
+Main Menu:
+
+```
+1 ▶ Start Engine
+```
+
+Ghost Engine will:
+
+• Start TOR
+• Create SOCKS5 Proxy
+• Create HTTP Proxy
+• Configure Local Services
+
+Wait until:
+
+```
+[+] Ghost Engine ONLINE
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY TOR
+
+Open:
+
+```
+7 ▶ Verify TOR
+```
+
+Expected:
+
+```
+TOR Status : VERIFIED
+```
+
+Example:
+
+```
+Exit IP : 185.xxx.xxx.xxx
+```
+
+If verification fails:
+
+• Check Internet Connection
+• Restart Ghost Engine
+• Restart TOR
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CHECK YOUR CURRENT TOR IP
+
+Menu:
+
+```
+4 ▶ Current IP
+```
+
+Ghost Engine will display:
+
+• Current TOR Exit IP
+• Session IP History
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ROTATE YOUR IDENTITY
+
+Single Rotation:
+
+```
+3 ▶ Rotate Once
+```
+
+Automatic Rotation:
+
+```
+2 ▶ Auto Rotate
+```
+
+Recommended:
+
+```
+15 Seconds
+```
+
+Stable:
+
+```
+30 Seconds
+```
+
+Very Stable:
+
+```
+60 Seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANDROID PROXY CONFIGURATION
+
+Open:
+
+```
+Settings
+→ WiFi
+→ Connected Network
+→ Modify Network
+```
+
+Proxy:
+
+```
+Manual
+```
+
+Host:
+
+```
+127.0.0.1
+```
+
+Port:
+
+```
+8118
+```
+
+Save Settings.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY PROXY
+
+After configuring Android Proxy:
+
+Open Browser
+
+Visit:
+
+```
+https://check.torproject.org
+```
+
+Expected:
+
+```
+Congratulations.
+This browser is configured to use TOR.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON COMMANDS
+
+Start Ghost Engine:
+
+```
+ns-ghost
+```
+
+Show Normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+Show TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+Check TOR Process:
+
+```
+ps aux | grep tor
+```
+
+Check Proxy:
+
+```
+ss -tlnp | grep 8118
+```
+
+Check SOCKS5:
+
+```
+ss -tlnp | grep 9050
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TERMUX BATTERY SETTINGS
+
+IMPORTANT
+
+Android may kill Termux in the background.
+
+Disable Battery Optimization:
+
+```
+Settings
+→ Apps
+→ Termux
+→ Battery
+→ Unrestricted
+```
+
+Recommended:
+
+```
+Keep Screen On During Testing
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TERMUX WAKE LOCK
+
+Prevent Android from sleeping:
+
+```
+termux-wake-lock
+```
+
+Release Lock:
+
+```
+termux-wake-unlock
+```
+
+Ghost Engine automatically attempts to use wake locks.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TROUBLESHOOTING
+
+Problem:
+
+```
+TOR Not Starting
+```
+
+Fix:
+
+```
+Restart Ghost Engine
+```
+
+Check:
+
+```
+ps aux | grep tor
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Verify TOR Failed
+```
+
+Fix:
+
+• Check Internet Connection
+• Restart Engine
+• Verify TOR Installation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Browser Shows Real IP
+```
+
+Fix:
+
+• Verify Android Proxy Settings
+• Verify TOR
+• Verify Port 8118
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Internet Stops Working
+```
+
+Fix:
+
+• Disable Android Proxy
+• Restart Ghost Engine
+• Re-enable Proxy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+IP Not Changing
+```
+
+Explanation:
+
+TOR may reuse exit nodes.
+
+Try:
+
+```
+2 ▶ Auto Rotate
+```
+
+Recommended:
+
+```
+15-30 Seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ADVANCED COMMANDS
+
+Current Network:
+
+```
+ip addr show
+```
+
+Current TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+Normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+Restart TOR:
+
+```
+1 ▶ Start Engine
+```
+
+View Logs:
+
+```
+5 ▶ Status & Logs
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SECURITY NOTES
+
+Ghost Engine increases privacy.
+
+Ghost Engine does NOT make you anonymous if you:
+
+• Log into personal accounts
+• Reveal personal information
+• Share device identifiers
+• Download unsafe files
+
+Your privacy depends on both:
+
+• Ghost Engine
+• Your own behavior
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NEXT READING
+
+• Quick Start Guide
+• WSL Guide
+• Linux Guide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF TERMUX GUIDE
+
+Ghost Engine v5
+NS CODEX • Naboraj Sarkar (Nishant)
