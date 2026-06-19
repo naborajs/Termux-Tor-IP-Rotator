@@ -437,6 +437,7 @@ single_rotate() {
     local IP
     IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
     remember_ip "$IP"
+    ((TOTAL_ROTATIONS++))
     echo
     matrix_burst
     echo -e "${GREEN}♻ Single Rotate Done${RESET}"
