@@ -2,7 +2,7 @@
 # 💙 NS GAMMING – GHOST ENGINE v4 (HYBRID SINGLE NODE)
 # Single Tor • ControlPort • Auto-Rotate • IP History • Hacker UI
 
-PREFIX="/data/data/com.termux/files/usr"
+PREFIX="${PREFIX:-/usr}"
 BASE_DIR="$HOME/.ns_ghost"
 TOR_DIR="$BASE_DIR/tor_single"
 PRIVOXY_CONF="$BASE_DIR/privoxy.conf"
