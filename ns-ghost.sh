@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/usr/bin/env bash
 # 💙 NS GAMMING – GHOST ENGINE v4 (HYBRID SINGLE NODE)
 # Single Tor • ControlPort • Auto-Rotate • IP History • Hacker UI
 
@@ -240,7 +240,7 @@ check_ip() {
     fi
     echo -e "${YELLOW}[+] Checking IP via Tor...${RESET}"
     local IP
-    IP=$(curl --proxy "http://127.0.0.1:${PRIVOXY_PORT}" -s https://api64.ipify.org 2>/dev/null)
+    IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
     remember_ip "$IP"
     echo
     matrix_burst
@@ -263,7 +263,7 @@ single_rotate() {
         | nc 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1
     sleep 3
     local IP
-    IP=$(curl --proxy "http://127.0.0.1:${PRIVOXY_PORT}" -s https://api64.ipify.org 2>/dev/null)
+    IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
     remember_ip "$IP"
     echo
     matrix_burst
@@ -301,7 +301,7 @@ smart_rotate_loop() {
             | nc 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1
 
         local IP
-        IP=$(curl --proxy "http://127.0.0.1:${PRIVOXY_PORT}" -s https://api64.ipify.org 2>/dev/null)
+        IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
         remember_ip "$IP"
 
         banner
