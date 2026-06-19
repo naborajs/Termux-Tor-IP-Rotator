@@ -804,20 +804,31 @@ show_ip_history() {
         return
     fi
 
-    local idx=1
+    echo
 
-    for ip in "${IP_HISTORY[@]}"; do
+    local TOTAL=${#IP_HISTORY[@]}
+    local START=1
 
-        if [[ "$ip" == "$LAST_IP" ]]; then
+    if (( TOTAL > 50 )); then
+        START=$((TOTAL - 49))
+    fi
+
+    local idx=$START
+
+    for ip in "${IP_HISTORY[@]: -50}"; do
+
+        if [[ "$ip" == "$CURRENT_IP" ]]; then
             echo -e "  ${MAG}#${idx}${RESET} ${GREEN}${ip}${RESET} ${YELLOW}(CURRENT)${RESET}"
         else
             echo -e "  ${MAG}#${idx}${RESET} ${GREEN}${ip}${RESET}"
         fi
 
         ((idx++))
+
     done
 
     echo
+    echo -e "${CYAN}Total IPs:${RESET} ${#IP_HISTORY[@]}"
     echo -e "${CYAN}Unique IPs:${RESET} $(printf "%s\n" "${IP_HISTORY[@]}" | sort -u | wc -l)"
 }
 
@@ -992,50 +1003,116 @@ EOF
     echo -e "${GREEN}[5/5] Startup Complete${RESET}"
     echo
 
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${GREEN}        GHOST ENGINE ONLINE${RESET}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo
-
+    
     printf "%-18s %s\n" "Platform:" "$PLATFORM_NAME"
+    printf "%-18s %s\n" "TOR Status:" "ONLINE"
+    printf "%-18s %s\n" "Proxy Status:" "ONLINE"
     printf "%-18s %s\n" "Current IP:" "${CURRENT_IP:-UNKNOWN}"
     printf "%-18s %s\n" "SOCKS5 Proxy:" "127.0.0.1:${TOR_SOCKS_PORT}"
     printf "%-18s %s\n" "HTTP Proxy:" "${PROXY_HOST}:${PRIVOXY_PORT}"
     printf "%-18s %s\n" "Started:" "$LAST_START_TIME"
-
+    
     echo
-
-    case "$PLATFORM_NAME" in
-
-        WSL)
-            echo -e "${YELLOW}Windows Setup:${RESET}"
-            echo -e "Use ${PROXY_HOST}:${PRIVOXY_PORT}"
-            echo
-            ;;
-
-        Termux)
-            echo -e "${YELLOW}Android Setup:${RESET}"
-            echo -e "Wi-Fi → Modify Network → Proxy → Manual"
-            echo -e "Host: 127.0.0.1"
-            echo -e "Port: ${PRIVOXY_PORT}"
-            echo
-            ;;
-
-        Linux)
-            echo -e "${YELLOW}Linux Setup:${RESET}"
-            echo -e "Configure your browser/app proxy settings."
-            echo
-            ;;
-
-        macOS)
-            echo -e "${YELLOW}macOS Setup:${RESET}"
-            echo -e "System Settings → Network → Proxies"
-            echo
-            ;;
-
+    
+    case "$PLATFORM_TYPE" in
+    
+    WSL)
+    
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo -e "${YELLOW}WINDOWS SETUP GUIDE${RESET}"
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo
+    
+        echo "1. Press ENTER"
+        echo "2. Open Windows Settings"
+        echo "3. Network & Internet"
+        echo "4. Proxy"
+        echo "5. Enable Manual Proxy"
+    
+        echo
+        printf "%-12s %s\n" "Address:" "$PROXY_HOST"
+        printf "%-12s %s\n" "Port:" "$PRIVOXY_PORT"
+    
+        echo
+        echo -e "${GREEN}Expected TOR IP:${RESET} ${CURRENT_IP}"
+    
+        echo
+        echo -e "${CYAN}Verify TOR:${RESET}"
+        echo "https://api64.ipify.org"
+        echo "https://check.torproject.org"
+    
+        echo
+        echo -e "${YELLOW}Important:${RESET}"
+        echo "• Keep Ghost Engine running"
+        echo "• Disable Windows Proxy before closing"
+        echo "• If internet stops, disable the proxy"
+    
+        echo
+        ;;
+    
+    TERMUX)
+    
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo -e "${YELLOW}ANDROID / TERMUX GUIDE${RESET}"
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo
+    
+        echo "SOCKS5 Proxy:"
+        echo "127.0.0.1:${TOR_SOCKS_PORT}"
+    
+        echo
+        echo "Apps such as Firefox support SOCKS5 directly."
+        echo
+        echo "Verify:"
+        echo "https://api64.ipify.org"
+        echo
+        ;;
+    
+    MACOS)
+    
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo -e "${YELLOW}macOS GUIDE${RESET}"
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo
+    
+        echo "System Settings → Network → Proxies"
+    
+        echo
+        printf "%-12s %s\n" "Host:" "127.0.0.1"
+        printf "%-12s %s\n" "Port:" "$PRIVOXY_PORT"
+    
+        echo
+        echo "Verify:"
+        echo "https://api64.ipify.org"
+        echo
+        ;;
+    
+    *)
+    
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo -e "${YELLOW}LINUX GUIDE${RESET}"
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+        echo
+    
+        echo "Configure browser proxy settings"
+    
+        echo
+        printf "%-12s %s\n" "Host:" "127.0.0.1"
+        printf "%-12s %s\n" "Port:" "$PRIVOXY_PORT"
+    
+        echo
+        echo "Verify:"
+        echo "https://api64.ipify.org"
+        echo
+        ;;
+    
     esac
-
-    read -p $'Press ENTER to continue... ' _
+    
+        read -p $'Press ENTER to continue... ' _
 }
 
 stop_all() {
@@ -2122,7 +2199,7 @@ about_screen() {
     echo -e "Name        : Ghost Engine"
     echo -e "Version     : v5"
     echo -e "Developer   : Naboraj Sarkar (Nishant)"
-    echo -e "Brand       : NS GAMING"
+    echo -e "Brand       : NS CODEX"
     echo -e "Platform    : $PLATFORM_NAME"
     echo
 

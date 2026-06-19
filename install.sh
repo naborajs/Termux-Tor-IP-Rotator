@@ -6,16 +6,29 @@ set -e
 if command -v termux-info >/dev/null 2>&1; then
     PLATFORM="termux"
     BIN_DIR="/data/data/com.termux/files/usr/bin"
-elif command -v apt >/dev/null 2>&1; then
+
+elif grep -qi microsoft /proc/version 2>/dev/null; then
+    PLATFORM="wsl"
+    BIN_DIR="$HOME/.local/bin"
+
+elif [[ "$(uname)" == "Linux" ]]; then
     PLATFORM="linux"
     BIN_DIR="$HOME/.local/bin"
+
 elif command -v brew >/dev/null 2>&1; then
     PLATFORM="mac"
-    BIN_DIR="/usr/local/bin"
+
+    if [[ -d "/opt/homebrew/bin" ]]; then
+        BIN_DIR="/opt/homebrew/bin"
+    else
+        BIN_DIR="/usr/local/bin"
+    fi
+
 else
     echo "Unsupported platform"
     exit 1
 fi
+
 INSTALL_NAME="ns-ghost"
 SCRIPT_NAME="ns-ghost.sh"
 
@@ -33,17 +46,78 @@ install_dependencies() {
     case "$PLATFORM" in
 
         termux)
+
             pkg update -y
-            pkg install -y tor privoxy curl netcat-openbsd
+
+            pkg install -y \
+                tor \
+                privoxy \
+                curl \
+                netcat-openbsd
+
         ;;
 
-        linux)
+        linux|wsl)
+
+            echo -e "${YELLOW}[+] Checking sudo access...${RESET}"
+
+            sudo -v || {
+                echo -e "${RED}[ERROR] Sudo access required.${RESET}"
+                exit 1
+            }
+
+            echo -e "${YELLOW}[+] Removing conflicting system services...${RESET}"
+
+            sudo systemctl stop tor 2>/dev/null || true
+            sudo systemctl stop privoxy 2>/dev/null || true
+
+            sudo systemctl disable tor 2>/dev/null || true
+            sudo systemctl disable privoxy 2>/dev/null || true
+
             sudo apt update
-            sudo apt install -y tor privoxy curl netcat-openbsd
+
+            sudo apt install -y \
+                tor \
+                privoxy \
+                curl \
+                netcat-openbsd
+
+            echo -e "${YELLOW}[+] Verifying installation...${RESET}"
+
+            command -v tor >/dev/null || {
+                echo -e "${RED}[ERROR] TOR installation failed.${RESET}"
+                exit 1
+            }
+
+            command -v privoxy >/dev/null || {
+                echo -e "${RED}[ERROR] Privoxy installation failed.${RESET}"
+                exit 1
+            }
+
+            command -v curl >/dev/null || {
+                echo -e "${RED}[ERROR] Curl installation failed.${RESET}"
+                exit 1
+            }
+
+            echo -e "${GREEN}[SUCCESS] Dependencies installed.${RESET}"
+
         ;;
 
         mac)
-            brew install tor privoxy curl netcat
+
+            brew install \
+                tor \
+                privoxy \
+                curl \
+                netcat
+
+        ;;
+
+        *)
+
+            echo -e "${RED}[ERROR] Unsupported platform.${RESET}"
+            exit 1
+
         ;;
 
     esac
