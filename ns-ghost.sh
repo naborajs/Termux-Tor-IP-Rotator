@@ -1,24 +1,36 @@
-#!/usr/bin/env bash
-# 💙 NS GAMMING – GHOST ENGINE v4 (HYBRID SINGLE NODE)
-# Single Tor • ControlPort • Auto-Rotate • IP History • Hacker UI
-
+# ==========================================================
+# 👻 GHOST ENGINE v5
+# NS GAMING • Advanced TOR Identity Framework
+# ==========================================================
 PREFIX="${PREFIX:-/usr}"
 BASE_DIR="$HOME/.ns_ghost"
 TOR_DIR="$BASE_DIR/tor_single"
 PRIVOXY_CONF="$BASE_DIR/privoxy.conf"
-
+LOG_FILE="$BASE_DIR/tor_debug.log"
 TOR_SOCKS_PORT=9050
 TOR_CONTROL_PORT=9051
 PRIVOXY_PORT=8118
-
-LOG_FILE="$BASE_DIR/tor_debug.log"
-IP_HISTORY=()
-TOTAL_ROTATIONS=0
 SESSION_START=$(date +%s)
+TOTAL_ROTATIONS=0
+SUCCESS_COUNT=0
+ERROR_COUNT=0
+RESTART_COUNT=0
+LAST_RESTART_TIME="Never"
+IP_HISTORY=()
 LAST_IP=""
+CURRENT_IP="UNKNOWN"
 DUPLICATE_COUNT=0
 MAX_DUPLICATES=5
-
+TOR_RUNNING="UNKNOWN"
+PROXY_RUNNING="UNKNOWN"
+PLATFORM_NAME="Unknown"
+PROXY_HOST="127.0.0.1"
+SHOW_MATRIX=true
+SHOW_COLORS=true
+ENGINE_NAME="Ghost Engine"
+ENGINE_VERSION="v5"
+ENGINE_AUTHOR="Naboraj Sarkar"
+ENGINE_BRAND="NS CODEX"
 
 GREEN="\e[38;5;46m"
 CYAN="\e[38;5;51m"
@@ -245,34 +257,117 @@ check_duplicate_ip() {
 
     LAST_IP="$current_ip"
 
-    if (( DUPLICATE_COUNT >= MAX_DUPLICATES )); then
+    if (( DUPLICATE_COUNT < MAX_DUPLICATES )); then
+        return
+    fi
 
-        echo
-        echo -e "${RED}[!] Same IP detected ${MAX_DUPLICATES} times.${RESET}"
-        echo -e "${YELLOW}[+] Restarting Tor engine...${RESET}"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | Duplicate IP threshold reached (${current_ip})" >> "$LOG_FILE"
 
-        pkill tor 2>/dev/null
-        pkill privoxy 2>/dev/null
+    ((RESTART_COUNT++))
+    LAST_RESTART_TIME=$(date '+%H:%M:%S')
 
-        sleep 3
+    pkill tor 2>/dev/null
+    pkill privoxy 2>/dev/null
 
-        start_tor_engine
+    sleep 3
+
+    start_tor_engine true >/dev/null 2>&1
+
+    local tries=0
+
+    while (( tries < 30 )); do
+
+        if check_tor && check_privoxy; then
+            break
+        fi
+
+        sleep 2
+        ((tries++))
+
+    done
+
+    if ! check_tor || ! check_privoxy; then
+
+        ((ERROR_COUNT++))
+
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | Engine restart failed" >> "$LOG_FILE"
 
         DUPLICATE_COUNT=0
+        return
+
     fi
+
+    local new_ip=""
+    local attempt=0
+
+    while (( attempt < 10 )); do
+
+        sleep 5
+
+        new_ip=$(curl \
+            --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+            -s \
+            --max-time 15 \
+            https://api64.ipify.org)
+
+        [[ -z "$new_ip" ]] && {
+            ((attempt++))
+            continue
+        }
+
+        if [[ "$new_ip" != "$current_ip" ]]; then
+
+            remember_ip "$new_ip"
+
+            ((SUCCESS_COUNT++))
+
+            echo "$(date '+%Y-%m-%d %H:%M:%S') | New IP acquired: $new_ip" >> "$LOG_FILE"
+
+            DUPLICATE_COUNT=0
+            LAST_IP="$new_ip"
+
+            return
+
+        fi
+
+        echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" \
+            | nc 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1
+
+        ((attempt++))
+
+    done
+
+    ((ERROR_COUNT++))
+
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | Failed to obtain a new IP after restart" >> "$LOG_FILE"
+
+    DUPLICATE_COUNT=0
 }
 
 show_ip_history() {
-    echo -e "${CYAN}📜 IP History (this session):${RESET}"
+
+    echo -e "${CYAN}📜 IP History (${#IP_HISTORY[@]} Recorded)${RESET}"
+
     if (( ${#IP_HISTORY[@]} == 0 )); then
-        echo -e "  ${DIM}(no IPs recorded yet)${RESET}"
+        echo -e "  ${DIM}(No IPs recorded yet)${RESET}"
         return
     fi
+
     local idx=1
+
     for ip in "${IP_HISTORY[@]}"; do
-        echo -e "  ${MAG}#${idx}${RESET}  ${GREEN}${ip}${RESET}"
+
+        if [[ "$ip" == "$LAST_IP" ]]; then
+            echo -e "  ${MAG}#${idx}${RESET} ${GREEN}${ip}${RESET} ${YELLOW}(CURRENT)${RESET}"
+        else
+            echo -e "  ${MAG}#${idx}${RESET} ${GREEN}${ip}${RESET}"
+        fi
+
         ((idx++))
     done
+
+    echo
+    echo -e "${CYAN}Unique IPs:${RESET} $(printf "%s\n" "${IP_HISTORY[@]}" | sort -u | wc -l)"
 }
 
 start_tor_engine() {
@@ -681,50 +776,160 @@ read -p $'Press ENTER to continue... ' _
 
 
 smart_rotate_loop() {
-    banner
-    echo -e "${CYAN}[+] Auto-Rotation Mode (Hybrid)${RESET}"
-    echo -e "${DIM}Tor itself prefers 10+ sec, but 3–5 sec is okay for fast cycling.${RESET}"
-    echo
-    echo -ne "${CYAN}Enter rotation interval in seconds (min 3): ${RESET}"
-    read -r T
-    if ! [[ "$T" =~ ^[0-9]+$ ]]; then
-        T=10
-    fi
-    (( T < 3 )) && T=3
 
-    while true; do
-        if ! check_privoxy || ! check_tor; then
-            echo -e "${YELLOW}[!] Engine looks down, restarting...${RESET}"
-            start_tor_engine || {
-                echo -e "${RED}[!] Could not restart engine. Exiting rotate mode.${RESET}"
-                sleep 2
-                return
-            }
+clear
+
+detect_platform
+
+echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+echo -e "${CYAN}║             AUTO ROTATION DASHBOARD              ║${RESET}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+echo
+
+read -p "Rotation Interval (seconds, min 3): " T
+
+[[ ! "$T" =~ ^[0-9]+$ ]] && T=10
+(( T < 3 )) && T=3
+
+while true; do
+
+    if ! check_tor || ! check_privoxy; then
+
+        ((ERROR_COUNT++))
+
+        echo
+        echo -e "${YELLOW}[RECOVERY] Engine offline. Restarting...${RESET}"
+
+        start_tor_engine true >/dev/null 2>&1
+
+        local WAIT_COUNT=0
+
+        while (( WAIT_COUNT < 30 )); do
+
+            if check_tor && check_privoxy; then
+                break
+            fi
+
+            sleep 2
+            ((WAIT_COUNT++))
+
+        done
+
+        if ! check_tor || ! check_privoxy; then
+
+            ((ERROR_COUNT++))
+
+            echo -e "${RED}[ERROR] Recovery failed.${RESET}"
+
+            sleep 5
+            continue
+
         fi
 
-        echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" \
-            | nc 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1
+        ((RESTART_COUNT++))
 
-        local IP
-        IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
-        remember_ip "$IP"
-        ((TOTAL_ROTATIONS++))
-        check_duplicate_ip "$IP"
+    fi
 
-        banner
-        matrix_burst
-        echo -e "${GREEN}🌐 Auto-Rotate Running${RESET}"
-        echo -e "${GREEN}Current Tor Exit IP: ${BOLD}${IP:-UNKNOWN}${RESET}"
-        echo -e "${BLUE}Proxy: 127.0.0.1:${PRIVOXY_PORT}${RESET}"
-        echo -e "${CYAN}Requested interval: ${T}s (sleep is exact).${RESET}"
-        echo -e "${YELLOW}Duplicate Count: ${DUPLICATE_COUNT}/${MAX_DUPLICATES}${RESET}"
-        echo
-        show_ip_history
-        echo
-        echo -e "${MAG}CTRL + C to stop auto-rotation.${RESET}"
+    PREVIOUS_IP="$CURRENT_IP"
+
+    echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" \
+        | nc 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1
+
+    sleep 5
+
+    IP=$(curl \
+        --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+        -s \
+        --max-time 15 \
+        https://api64.ipify.org)
+
+    if [[ -z "$IP" ]]; then
+
+        ((ERROR_COUNT++))
+
         sleep "$T"
-    done
+        continue
+
+    fi
+
+    CURRENT_IP="$IP"
+
+    remember_ip "$IP"
+
+    ((TOTAL_ROTATIONS++))
+
+    if [[ "$CURRENT_IP" != "$PREVIOUS_IP" ]]; then
+        ((SUCCESS_COUNT++))
+    fi
+
+    check_duplicate_ip "$IP"
+
+    NOW=$(date +%s)
+    UPTIME=$((NOW - SESSION_START))
+
+    clear
+
+    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║             AUTO ROTATION DASHBOARD              ║${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+    echo
+
+    printf "%-18s %s\n" "Platform:" "$PLATFORM_NAME"
+    printf "%-18s %s\n" "Current IP:" "$CURRENT_IP"
+    printf "%-18s %s\n" "Previous IP:" "${PREVIOUS_IP:-N/A}"
+
+    echo
+
+    printf "%-18s %s\n" "Rotations:" "$TOTAL_ROTATIONS"
+    printf "%-18s %s\n" "Successes:" "$SUCCESS_COUNT"
+    printf "%-18s %s\n" "Errors:" "$ERROR_COUNT"
+    printf "%-18s %s\n" "Restarts:" "$RESTART_COUNT"
+
+    echo
+
+    printf "%-18s %s\n" "Duplicates:" "$DUPLICATE_COUNT/$MAX_DUPLICATES"
+    printf "%-18s %s\n" "Stored IPs:" "${#IP_HISTORY[@]}"
+
+    echo
+
+    printf "%-18s %s\n" "SOCKS5:" "127.0.0.1:${TOR_SOCKS_PORT}"
+    printf "%-18s %s\n" "Proxy:" "${PROXY_HOST}:${PRIVOXY_PORT}"
+
+    echo
+
+    printf "%-18s %s\n" \
+    "Uptime:" \
+    "$(printf '%02dh %02dm %02ds' \
+    $((UPTIME/3600)) \
+    $(((UPTIME%3600)/60)) \
+    $((UPTIME%60)))"
+
+    echo
+    echo -e "${CYAN}Recent IP History${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    if (( ${#IP_HISTORY[@]} == 0 )); then
+
+        echo "No IPs recorded."
+
+    else
+
+        for ip in "${IP_HISTORY[@]: -10}"; do
+            echo " • $ip"
+        done
+
+    fi
+
+    echo
+    echo -e "${GREEN}Status: Monitoring & Rotating Automatically${RESET}"
+    echo -e "${DIM}Press CTRL+C to stop.${RESET}"
+
+    sleep "$T"
+
+done
+
 }
+
 
 torify_url() {
 
