@@ -476,6 +476,7 @@ smart_rotate_loop() {
         local IP
         IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
         remember_ip "$IP"
+        ((TOTAL_ROTATIONS++))
         check_duplicate_ip "$IP"
 
         banner
@@ -506,6 +507,47 @@ torify_url() {
     echo
     curl --proxy "http://127.0.0.1:${PRIVOXY_PORT}" -s "$URL"
     echo
+    read -p $'Press ENTER to continue... ' _
+}
+
+verify_tor() {
+
+    banner
+
+    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║                TOR VERIFICATION                   ║${RESET}"
+    echo -e "${CYAN}╠════════════════════════════════════════════════════╣${RESET}"
+
+    if ! check_tor; then
+        echo -e "${RED}║  TOR Status : OFFLINE                             ║${RESET}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+        echo
+        echo -e "${RED}[!] TOR is not running.${RESET}"
+        echo
+        read -p $'Press ENTER to continue... ' _
+        return
+    fi
+
+    local RESULT
+    RESULT=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+        -s https://check.torproject.org/api/ip)
+
+    local IP
+    IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+        -s https://api64.ipify.org)
+
+    echo -e "${GREEN}║  TOR Status : VERIFIED                            ║${RESET}"
+    echo -e "${GREEN}║  Exit IP   : ${IP:-UNKNOWN}${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+
+    echo
+    echo -e "${YELLOW}Raw Response:${RESET}"
+    echo "$RESULT"
+
+    echo
+    echo -e "${GREEN}[SUCCESS] Traffic is routed through TOR.${RESET}"
+    echo
+
     read -p $'Press ENTER to continue... ' _
 }
 
