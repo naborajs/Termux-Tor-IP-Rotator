@@ -52,10 +52,16 @@ matrix_burst() {
 }
 
 security_hardening() {
-    termux-wake-lock 2>/dev/null
+
+    if command -v termux-wake-lock >/dev/null 2>&1; then
+        termux-wake-lock 2>/dev/null
+    fi
+
     export HISTFILE=/dev/null
     unset HISTFILE
+
     rm -f "$HOME/.bash_history" "$HOME/.zsh_history" 2>/dev/null
+
     mkdir -p "$BASE_DIR"
     : > "$LOG_FILE"
 }
@@ -63,13 +69,30 @@ security_hardening() {
 install_deps() {
     banner
     echo -e "${YELLOW}[+] Checking dependencies...${RESET}"
-    pkg update -y >/dev/null 2>&1
-    for pkg_name in tor privoxy curl netcat-openbsd; do
-        if ! command -v ${pkg_name%%-*} >/dev/null 2>&1; then
-            echo -e "${YELLOW}[+] Installing ${pkg_name}...${RESET}"
+
+    if command -v pkg >/dev/null 2>&1; then
+
+        pkg update -y >/dev/null 2>&1
+
+        for pkg_name in tor privoxy curl netcat-openbsd; do
             pkg install -y "$pkg_name" >/dev/null 2>&1
-        fi
-    done
+        done
+
+    elif command -v apt >/dev/null 2>&1; then
+
+        sudo apt update -y >/dev/null 2>&1
+        sudo apt install -y tor privoxy curl netcat-openbsd >/dev/null 2>&1
+
+    elif command -v brew >/dev/null 2>&1; then
+
+        brew install tor privoxy curl netcat
+
+    else
+
+        echo -e "${RED}[!] Unsupported system.${RESET}"
+        exit 1
+
+    fi
 }
 
 check_tor() {
