@@ -1,23 +1,51 @@
 ╔══════════════════════════════════════════════════════════════╗
-║                   GHOST ENGINE QUICK START                  ║
+║                GHOST ENGINE QUICK START GUIDE               ║
 ╚══════════════════════════════════════════════════════════════╝
 
-WELCOME
+REPOSITORY
 
-Ghost Engine is a TOR-powered privacy toolkit that allows you to:
-
-• Route traffic through the TOR network
-• Rotate TOR identities
-• View TOR exit IPs
-• Verify TOR connectivity
-• Configure system/browser proxies
-• Monitor TOR status and logs
+https://github.com/naborajs/Termux-Tor-IP-Rotator
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1 — START GHOST ENGINE
+WHAT IS GHOST ENGINE?
 
-Launch the tool:
+Ghost Engine is a TOR-powered privacy toolkit that allows you to:
+
+• Route traffic through TOR
+• Rotate TOR identities
+• Change TOR exit IPs
+• Verify TOR connectivity
+• Use HTTP and SOCKS5 proxies
+• Monitor your current TOR identity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSTALLATION
+
+Clone Repository:
+
+```
+git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
+```
+
+Enter Directory:
+
+```
+cd Termux-Tor-IP-Rotator
+```
+
+Install:
+
+```
+bash install.sh
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+START GHOST ENGINE
+
+Launch:
 
 ```
 ns-ghost
@@ -31,61 +59,48 @@ or
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 2 — START THE ENGINE
+FIRST TIME SETUP
 
-From the main menu:
+Step 1
+
+Start Engine:
 
 ```
 1 ▶ Start Engine
 ```
 
-Ghost Engine will:
-
-• Start TOR
-• Create a TOR control port
-• Start Privoxy
-• Configure the local proxy
-
 Wait until:
 
 ```
-[+] Ghost Engine ONLINE
+TOR ONLINE
+Proxy ONLINE
 ```
-
-appears.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 3 — VERIFY TOR IS WORKING
+Step 2
 
-From the main menu:
+Verify TOR:
 
 ```
 7 ▶ Verify TOR
 ```
 
-Expected result:
+Expected:
 
 ```
 TOR Status : VERIFIED
 ```
 
-You should also see a TOR Exit IP.
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 4 — VIEW YOUR CURRENT TOR IP
+Step 3
 
-From the main menu:
+Check Current TOR IP:
 
 ```
 4 ▶ Current IP
 ```
-
-Ghost Engine will display:
-
-• Current TOR Exit IP
-• Session IP History
 
 Example:
 
@@ -95,7 +110,9 @@ Example:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 5 — ROTATE YOUR IDENTITY
+Step 4
+
+Rotate Identity:
 
 Single Rotation:
 
@@ -109,96 +126,169 @@ Automatic Rotation:
 2 ▶ Auto Rotate
 ```
 
-Recommended interval:
+Recommended:
 
 ```
-15 seconds
-```
-
-For maximum stability:
-
-```
-30-60 seconds
+15 Seconds
 ```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 6 — USE THE PROXY
+VERIFY EVERYTHING IS WORKING
 
-Default Proxy:
-
-```
-Host : 127.0.0.1
-Port : 8118
-```
-
-WSL Users:
-
-```
-Open:
-
-    8 ▶ Proxy Guide
-```
-
-for platform-specific instructions.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-COMMON COMMANDS
-
-Check normal IP:
+Normal IP:
 
 ```
 curl https://api64.ipify.org
 ```
 
-Check TOR IP:
+TOR IP:
 
 ```
 curl --socks5 127.0.0.1:9050 https://api64.ipify.org
 ```
 
-The two IPs should be different.
+Expected:
+
+```
+Different IP addresses
+```
+
+If the IPs are different:
+
+```
+Ghost Engine is working correctly.
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-TROUBLESHOOTING
+USING THE PROXY
 
-TOR Offline
+HTTP Proxy:
+
+```
+127.0.0.1:8118
+```
+
+SOCKS5 Proxy:
+
+```
+127.0.0.1:9050
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHICH GUIDE SHOULD I READ?
+
+Windows + WSL Users:
+
+```
+WSL Guide
+```
+
+Android Users:
+
+```
+Termux Guide
+```
+
+Native Linux Users:
+
+```
+Linux Guide
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MOST COMMON ISSUES
+
+Problem:
+
+```
+Verify TOR says OFFLINE
+```
+
+Fix:
 
 ```
 Restart Engine
-Option 1
+
+1 ▶ Start Engine
 ```
 
-Proxy Offline
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
 
 ```
-Restart Engine
-Option 1
+Exit IP does not change
 ```
 
-IP Not Changing
+Fix:
 
 ```
-Use Auto Rotation
-Wait at least 10–15 seconds
+Use:
+
+    2 ▶ Auto Rotate
+```
+
+Recommended:
+
+```
+    15-30 Seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Browser shows real IP
+```
+
+Fix:
+
+```
+Configure browser/system proxy.
+```
+
+Read your platform guide.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK HEALTH CHECK
+
+All commands below should work:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+
+ps aux | grep tor
+
+ps aux | grep privoxy
+```
+
+If they work:
+
+```
+Ghost Engine is operational.
 ```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 NEXT STEPS
 
-After Quick Start read:
+Read the guide for your platform:
 
-• WSL Guide
-• Linux Guide
-• Termux Guide
-• Proxy Guide
-• Commands Reference
-• Troubleshooting
+```
+📱 Termux Guide
+🖥 WSL Guide
+🐧 Linux Guide
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF QUICK START GUIDE
 
 Ghost Engine v5
 NS CODEX • Naboraj Sarkar (Nishant)

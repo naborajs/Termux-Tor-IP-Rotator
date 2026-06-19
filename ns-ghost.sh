@@ -655,8 +655,6 @@ docs_screen() {
         echo
 
         read -p "Choice: " doc_choice
-        echo "DEBUG: You entered [$doc_choice]"
-        sleep 3
 
         case "$doc_choice" in
 

@@ -1,80 +1,61 @@
 ╔══════════════════════════════════════════════════════════════╗
-║                  GHOST ENGINE WSL GUIDE                     ║
-║           Windows Subsystem for Linux (WSL)                ║
+║                   GHOST ENGINE WSL GUIDE                    ║
+║          Windows Subsystem for Linux (WSL)                 ║
 ╚══════════════════════════════════════════════════════════════╝
 
-OVERVIEW
+REPOSITORY
 
-This guide explains how to use Ghost Engine on:
-
-```
-Windows 10
-Windows 11
-WSL Ubuntu
-```
-
-WSL networking works differently from normal Linux.
-
-Most user issues happen because:
-
-• The proxy address is wrong
-• TOR is running only inside WSL
-• Windows cannot reach the WSL proxy
-• The browser is not configured correctly
-
-This guide covers all of these issues.
+https://github.com/naborajs/Termux-Tor-IP-Rotator
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-HOW GHOST ENGINE WORKS IN WSL
+IMPORTANT
 
-Flow:
+WSL is NOT normal Linux.
 
-```
-Browser
-   ↓
-Privoxy (8118)
-   ↓
-TOR (9050)
-   ↓
-TOR Network
-   ↓
-Internet
-```
+Ghost Engine runs inside WSL, but most users want to use
+Chrome, Edge or Brave running on Windows.
 
-Important:
+Because of this, Windows must be able to reach the proxy
+running inside WSL.
 
-TOR runs INSIDE WSL.
-
-Windows browsers must connect to the WSL proxy.
+Most issues happen because of incorrect proxy settings.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 1 — START GHOST ENGINE
+SETUP
 
-Launch:
+1. Clone Repository
 
-```
-ns-ghost
-```
+   git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
 
-Start Engine:
+2. Enter Directory
 
-```
-1 ▶ Start Engine
-```
+   cd Termux-Tor-IP-Rotator
+
+3. Install Ghost Engine
+
+   bash install.sh
+
+4. Launch Ghost Engine
+
+   ns-ghost
+
+5. Start Engine
+
+   1 ▶ Start Engine
 
 Wait until:
 
 ```
-[+] Ghost Engine ONLINE
+Ghost Engine ONLINE
 ```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 2 — VERIFY TOR
+VERIFY TOR
 
-Select:
+Menu:
 
 ```
 7 ▶ Verify TOR
@@ -86,25 +67,45 @@ Expected:
 TOR Status : VERIFIED
 ```
 
-Example:
+or manually:
 
 ```
-Exit IP : 185.xxx.xxx.xxx
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
 ```
 
-If verification fails:
+If an IP appears:
 
 ```
-Restart the engine
-Check internet connection
-Verify TOR is installed
+TOR is working.
 ```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 3 — FIND YOUR WSL IP
+VERIFY PRIVOXY
 
-Inside WSL:
+Run:
+
+```
+ss -tlnp | grep 8118
+```
+
+Expected:
+
+```
+LISTEN ... 0.0.0.0:8118
+```
+
+If nothing appears:
+
+```
+Restart Ghost Engine
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FIND YOUR WSL IP
+
+Run:
 
 ```
 hostname -I
@@ -118,33 +119,11 @@ Example:
 
 Your IP will be different.
 
-Use the first address shown.
+Use the FIRST IP displayed.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 4 — VERIFY PRIVOXY IS RUNNING
-
-Run:
-
-```
-ss -tlnp | grep 8118
-```
-
-Expected:
-
-```
-LISTEN 0.0.0.0:8118
-```
-
-If nothing appears:
-
-```
-Restart Ghost Engine
-```
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-STEP 5 — CONFIGURE WINDOWS PROXY
+WINDOWS PROXY SETUP
 
 Open:
 
@@ -165,35 +144,24 @@ Enter:
 ```
 Address:
     YOUR_WSL_IP
-
-Port:
-    8118
 ```
 
 Example:
 
 ```
-Address:
     172.25.56.176
 
 Port:
     8118
 ```
 
-DO NOT USE:
-
-```
-localhost
-127.0.0.1
-```
-
-unless specifically testing inside WSL.
+Save Settings.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STEP 6 — TEST THE PROXY
+VERIFY WINDOWS CONNECTION
 
-Open browser:
+Open:
 
 ```
 Chrome
@@ -216,7 +184,7 @@ This browser is configured to use TOR.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-VERIFYING YOUR IP
+TEST TOR MANUALLY
 
 Normal IP:
 
@@ -236,46 +204,6 @@ Expected:
 Different IP addresses
 ```
 
-If they are identical:
-
-```
-TOR is not being used.
-```
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-AUTO ROTATION
-
-Open:
-
-```
-2 ▶ Auto Rotation
-```
-
-Recommended:
-
-```
-15 seconds
-```
-
-Stable:
-
-```
-30 seconds
-```
-
-Very Stable:
-
-```
-60 seconds
-```
-
-Extremely low intervals may cause:
-
-• Repeated exit nodes
-• Slow connections
-• Temporary failures
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 COMMON PROBLEMS
@@ -283,56 +211,82 @@ COMMON PROBLEMS
 Problem:
 
 ```
-Browser shows real IP
+Browser still shows real IP
 ```
 
-Causes:
+Cause:
 
-• Proxy not configured
-• Wrong proxy address
-• Proxy disabled
+```
+Windows is not using Ghost Engine proxy.
+```
 
 Fix:
 
-• Verify Windows Proxy Settings
-• Verify WSL IP
-• Verify TOR
+Verify:
+
+```
+Windows Proxy Enabled
+```
+
+Verify:
+
+```
+Address = WSL IP
+```
+
+Verify:
+
+```
+Port = 8118
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Problem:
 
 ```
-Internet stops working
+Internet stops working after enabling proxy
 ```
 
-Causes:
+Cause:
 
-• Ghost Engine stopped
-• Privoxy stopped
-• Wrong proxy address
+```
+Ghost Engine is not running.
+```
+
+Cause:
+
+```
+Wrong WSL IP.
+```
 
 Fix:
 
-• Disable Windows Proxy
-• Restart Ghost Engine
-• Re-enable proxy
+Disable Windows Proxy.
+
+Restart Ghost Engine.
+
+Reconfigure Proxy.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Problem:
 
 ```
-Duplicated IPs
+Proxy works in terminal but not browser
 ```
 
-Explanation:
+Cause:
 
-TOR may reuse exit nodes.
+```
+Browser was started before proxy was enabled.
+```
 
-This is normal.
+Fix:
 
-Ghost Engine automatically detects repeated IPs and can restart the engine when the duplicate threshold is reached.
+Close browser completely.
+
+Reopen browser.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -342,13 +296,15 @@ Problem:
 Verify TOR says OFFLINE
 ```
 
-Check:
+Fix:
+
+Check TOR:
 
 ```
 ps aux | grep tor
 ```
 
-Check:
+Check SOCKS5:
 
 ```
 ss -tlnp | grep 9050
@@ -362,7 +318,101 @@ Restart:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ADVANCED COMMANDS
+Problem:
+
+```
+Exit IP not changing
+```
+
+Cause:
+
+```
+TOR reused the same exit node.
+```
+
+This is normal.
+
+Fix:
+
+Use:
+
+```
+2 ▶ Auto Rotate
+```
+
+Recommended:
+
+```
+15-30 seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Windows cannot connect to proxy
+```
+
+Check:
+
+```
+ss -tlnp | grep 8118
+```
+
+Expected:
+
+```
+0.0.0.0:8118
+```
+
+Bad:
+
+```
+127.0.0.1:8118
+```
+
+If you see:
+
+```
+127.0.0.1:8118
+```
+
+Windows cannot access the proxy.
+
+Ghost Engine should be configured to listen on:
+
+```
+0.0.0.0:8118
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+WSL IP changed
+```
+
+Cause:
+
+```
+WSL restarted.
+```
+
+Fix:
+
+Run:
+
+```
+hostname -I
+```
+
+Update Windows Proxy Settings.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USEFUL COMMANDS
 
 Show WSL IP:
 
@@ -373,41 +423,62 @@ hostname -I
 Check TOR:
 
 ```
-ss -tlnp | grep 9050
-```
-
-Check Proxy:
-
-```
-ss -tlnp | grep 8118
-```
-
-Check TOR Process:
-
-```
 ps aux | grep tor
 ```
 
-Check Privoxy Process:
+Check Privoxy:
 
 ```
 ps aux | grep privoxy
 ```
 
+Check SOCKS5 Port:
+
+```
+ss -tlnp | grep 9050
+```
+
+Check HTTP Proxy:
+
+```
+ss -tlnp | grep 8118
+```
+
+Check Normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+Check TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SECURITY NOTES
+QUICK HEALTH CHECK
 
-Ghost Engine improves privacy.
+All commands below should work:
 
-It does NOT make you anonymous if you:
+```
+hostname -I
 
-• Log into personal accounts
-• Reveal personal information
-• Download unsafe files
-• Disable TOR routing
+ps aux | grep tor
 
-Privacy depends on both the tool and user behavior.
+ps aux | grep privoxy
+
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+
+ss -tlnp | grep 8118
+```
+
+If all succeed:
+
+```
+Ghost Engine is operational.
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
