@@ -3,34 +3,74 @@
 # NS GAMING • Advanced TOR Identity Framework
 # ==========================================================
 PREFIX="${PREFIX:-/usr}"
+
 BASE_DIR="$HOME/.ns_ghost"
 TOR_DIR="$BASE_DIR/tor_single"
+
 PRIVOXY_CONF="$BASE_DIR/privoxy.conf"
 LOG_FILE="$BASE_DIR/tor_debug.log"
+
 TOR_SOCKS_PORT=9050
 TOR_CONTROL_PORT=9051
 PRIVOXY_PORT=8118
+
 SESSION_START=$(date +%s)
+
 TOTAL_ROTATIONS=0
 SUCCESS_COUNT=0
 ERROR_COUNT=0
 RESTART_COUNT=0
+
 LAST_RESTART_TIME="Never"
+LAST_START_TIME="Never"
+
 IP_HISTORY=()
+
 LAST_IP=""
+LAST_RECORDED_IP=""
+
 CURRENT_IP="UNKNOWN"
+
+UNIQUE_IP_COUNT=0
+
 DUPLICATE_COUNT=0
 MAX_DUPLICATES=5
+
 TOR_RUNNING="UNKNOWN"
 PROXY_RUNNING="UNKNOWN"
+
+TOR_STATUS="UNKNOWN"
+PROXY_STATUS="UNKNOWN"
+
 PLATFORM_NAME="Unknown"
+PLATFORM_TYPE="Unknown"
+
 PROXY_HOST="127.0.0.1"
+
+SYSTEM_ARCH="Unknown"
+KERNEL_VERSION="Unknown"
+
+UPTIME=0
+UPTIME_STRING="00h 00m 00s"
+
 SHOW_MATRIX=true
 SHOW_COLORS=true
+
 ENGINE_NAME="Ghost Engine"
 ENGINE_VERSION="v5"
+
 ENGINE_AUTHOR="Naboraj Sarkar"
 ENGINE_BRAND="NS CODEX"
+
+DEPENDENCIES_OK="$BASE_DIR/.deps_installed"
+
+DOCS_OS="Unknown"
+DOCS_RECOMMEND="Quick Start"
+
+HEALTH_SCORE=0
+
+AUTO_ROTATE_RUNNING=false
+
 
 GREEN="\e[38;5;46m"
 CYAN="\e[38;5;51m"
@@ -45,42 +85,115 @@ RESET="\e[0m"
 
 detect_platform() {
 
+    PLATFORM_NAME="Unknown"
+    PLATFORM_TYPE="Unknown"
+    PROXY_HOST="127.0.0.1"
+
     if grep -qi microsoft /proc/version 2>/dev/null; then
-        PLATFORM_NAME="🖥 WSL Ubuntu"
-        PROXY_HOST=$(hostname -I | awk '{print $1}')
+
+        PLATFORM_TYPE="WSL"
+
+        if grep -qi "WSL2" /proc/version 2>/dev/null; then
+            PLATFORM_NAME="🖥 WSL2"
+        else
+            PLATFORM_NAME="🖥 WSL"
+        fi
+
+        PROXY_HOST=$(hostname -I 2>/dev/null | awk '{print $1}')
+
+        [[ -z "$PROXY_HOST" ]] && \
+        PROXY_HOST=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
+
+        [[ -z "$PROXY_HOST" ]] && \
+        PROXY_HOST="127.0.0.1"
 
     elif command -v termux-info >/dev/null 2>&1; then
-        PLATFORM_NAME="📱 Termux"
+
+        PLATFORM_TYPE="TERMUX"
+        PLATFORM_NAME="📱 Android Termux"
         PROXY_HOST="127.0.0.1"
 
     elif [[ "$OSTYPE" == "darwin"* ]]; then
+
+        PLATFORM_TYPE="MACOS"
         PLATFORM_NAME="🍎 macOS"
         PROXY_HOST="127.0.0.1"
 
+    elif [[ -f /etc/arch-release ]]; then
+
+        PLATFORM_TYPE="ARCH"
+        PLATFORM_NAME="🐧 Arch Linux"
+        PROXY_HOST="127.0.0.1"
+
+    elif [[ -f /etc/fedora-release ]]; then
+
+        PLATFORM_TYPE="FEDORA"
+        PLATFORM_NAME="🐧 Fedora Linux"
+        PROXY_HOST="127.0.0.1"
+
+    elif [[ -f /etc/debian_version ]]; then
+
+        PLATFORM_TYPE="DEBIAN"
+        PLATFORM_NAME="🐧 Debian/Ubuntu"
+        PROXY_HOST="127.0.0.1"
+
     else
+
+        PLATFORM_TYPE="LINUX"
         PLATFORM_NAME="🐧 Linux"
         PROXY_HOST="127.0.0.1"
+
     fi
+
+    SYSTEM_ARCH=$(uname -m 2>/dev/null)
+    KERNEL_VERSION=$(uname -r 2>/dev/null)
+
 }
 
 detect_status() {
 
+    detect_platform
+
     if check_tor; then
         TOR_STATUS="${GREEN}ONLINE${RESET}"
+        TOR_RUNNING="ONLINE"
     else
         TOR_STATUS="${RED}OFFLINE${RESET}"
+        TOR_RUNNING="OFFLINE"
     fi
 
     if check_privoxy; then
         PROXY_STATUS="${GREEN}ONLINE${RESET}"
+        PROXY_RUNNING="ONLINE"
     else
         PROXY_STATUS="${RED}OFFLINE${RESET}"
+        PROXY_RUNNING="OFFLINE"
     fi
 
-    CURRENT_IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
-        -s https://api64.ipify.org 2>/dev/null)
+    if [[ "$TOR_RUNNING" == "ONLINE" ]]; then
+
+        CURRENT_IP=$(curl \
+            --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+            --max-time 5 \
+            -s \
+            https://api64.ipify.org 2>/dev/null)
+
+    fi
 
     [[ -z "$CURRENT_IP" ]] && CURRENT_IP="UNKNOWN"
+
+    NOW=$(date +%s)
+    UPTIME=$((NOW - SESSION_START))
+
+    UPTIME_H=$((UPTIME / 3600))
+    UPTIME_M=$(((UPTIME % 3600) / 60))
+    UPTIME_S=$((UPTIME % 60))
+
+    UPTIME_STRING=$(printf "%02dh %02dm %02ds" \
+        "$UPTIME_H" \
+        "$UPTIME_M" \
+        "$UPTIME_S")
+
 }
 
 
@@ -1716,11 +1829,19 @@ settings_menu() {
 
         echo "1) Change Duplicate Threshold"
         echo "2) Reset Session Statistics"
+        echo "3) Toggle Matrix Effect"
+        echo "4) Toggle Auto Log Saving"
+        echo "5) Clear Logs"
+        echo "6) Clear IP History"
         echo
+
         echo "Current Duplicate Limit : $MAX_DUPLICATES"
         echo "Current Rotations       : $TOTAL_ROTATIONS"
         echo "Current Saved IPs       : ${#IP_HISTORY[@]}"
+        echo "Matrix Effect           : $SHOW_MATRIX"
+        echo "Auto Save Logs          : $AUTO_SAVE_LOGS"
         echo
+
         echo "0) Back"
         echo
 
@@ -1729,45 +1850,114 @@ settings_menu() {
         case "$settings_choice" in
 
             1)
+
                 echo
                 read -p "Enter new duplicate limit: " new_limit
 
-                if [[ "$new_limit" =~ ^[0-9]+$ ]]; then
+                if [[ "$new_limit" =~ ^[0-9]+$ ]] && (( new_limit >= 1 )); then
+
                     MAX_DUPLICATES="$new_limit"
+
                     echo
-                    echo "[SUCCESS] Duplicate threshold updated."
+                    echo -e "${GREEN}[SUCCESS] Duplicate threshold updated.${RESET}"
+
                 else
+
                     echo
-                    echo "[ERROR] Invalid number."
+                    echo -e "${RED}[ERROR] Invalid number.${RESET}"
+
                 fi
 
                 sleep 2
                 ;;
 
             2)
+
                 TOTAL_ROTATIONS=0
-                IP_HISTORY=()
+                SUCCESS_COUNT=0
+                ERROR_COUNT=0
+                RESTART_COUNT=0
+
                 DUPLICATE_COUNT=0
 
+                IP_HISTORY=()
+
+                LAST_IP=""
+                CURRENT_IP="UNKNOWN"
+
                 echo
-                echo "[SUCCESS] Session statistics reset."
+                echo -e "${GREEN}[SUCCESS] Session statistics reset.${RESET}"
+
+                sleep 2
+                ;;
+
+            3)
+
+                if [[ "$SHOW_MATRIX" == true ]]; then
+                    SHOW_MATRIX=false
+                else
+                    SHOW_MATRIX=true
+                fi
+
+                echo
+                echo -e "${GREEN}[SUCCESS] Matrix setting updated.${RESET}"
+
+                sleep 1
+                ;;
+
+            4)
+
+                if [[ "$AUTO_SAVE_LOGS" == true ]]; then
+                    AUTO_SAVE_LOGS=false
+                else
+                    AUTO_SAVE_LOGS=true
+                fi
+
+                echo
+                echo -e "${GREEN}[SUCCESS] Log setting updated.${RESET}"
+
+                sleep 1
+                ;;
+
+            5)
+
+                : > "$LOG_FILE"
+
+                echo
+                echo -e "${GREEN}[SUCCESS] Logs cleared.${RESET}"
+
+                sleep 2
+                ;;
+
+            6)
+
+                IP_HISTORY=()
+                LAST_IP=""
+                CURRENT_IP="UNKNOWN"
+
+                echo
+                echo -e "${GREEN}[SUCCESS] IP history cleared.${RESET}"
+
                 sleep 2
                 ;;
 
             0)
+
                 return
                 ;;
 
             *)
+
                 echo
-                echo "[ERROR] Invalid choice."
+                echo -e "${RED}[ERROR] Invalid choice.${RESET}"
+
                 sleep 1
                 ;;
+
         esac
 
     done
 }
-
 about_screen() {
 
     clear
