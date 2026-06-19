@@ -184,63 +184,254 @@ matrix_burst() {
 
 security_hardening() {
 
-    if command -v termux-wake-lock >/dev/null 2>&1; then
-        termux-wake-lock 2>/dev/null
-    fi
+    mkdir -p "$BASE_DIR"
+    mkdir -p "$BASE_DIR/docs"
+    mkdir -p "$TOR_DIR"
+
+    touch "$LOG_FILE"
 
     export HISTFILE=/dev/null
     unset HISTFILE
 
-    rm -f "$HOME/.bash_history" "$HOME/.zsh_history" 2>/dev/null
+    if command -v termux-wake-lock >/dev/null 2>&1; then
+        termux-wake-lock >/dev/null 2>&1
+    fi
 
-    mkdir -p "$BASE_DIR"
-    : > "$LOG_FILE"
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        PLATFORM_NAME="WSL"
+
+    elif command -v termux-info >/dev/null 2>&1; then
+        PLATFORM_NAME="Termux"
+
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        PLATFORM_NAME="macOS"
+
+    else
+        PLATFORM_NAME="Linux"
+    fi
+
+    echo "========================================" >> "$LOG_FILE"
+    echo "Ghost Engine Startup" >> "$LOG_FILE"
+    echo "Date: $(date)" >> "$LOG_FILE"
+    echo "Platform: $PLATFORM_NAME" >> "$LOG_FILE"
+    echo "========================================" >> "$LOG_FILE"
+
+    : > "$BASE_DIR/runtime.lock"
+
 }
 
 install_deps() {
-    banner
-    echo -e "${YELLOW}[+] Checking dependencies...${RESET}"
 
-    if command -v pkg >/dev/null 2>&1; then
+local DEPS_MARKER="$BASE_DIR/.deps_installed"
+local SILENT="${1:-false}"
 
-        pkg update -y >/dev/null 2>&1
+if [[ -f "$DEPS_MARKER" ]]; then
+    return 0
+fi
 
-        for pkg_name in tor privoxy curl netcat-openbsd; do
-            pkg install -y "$pkg_name" >/dev/null 2>&1
-        done
-
-    elif command -v apt >/dev/null 2>&1; then
-
-        sudo apt update -y >/dev/null 2>&1
-        sudo apt install -y tor privoxy curl netcat-openbsd >/dev/null 2>&1
-
-    elif command -v brew >/dev/null 2>&1; then
-
-        brew install tor privoxy curl netcat
-
-    else
-
-        echo -e "${RED}[!] Unsupported system.${RESET}"
-        exit 1
-
-    fi
+[[ "$SILENT" != "true" ]] && {
+    clear
+    echo -e "${CYAN}[SYSTEM] Checking Dependencies...${RESET}"
+    echo
 }
+
+local REQUIRED=(
+    tor
+    curl
+)
+
+local MISSING=()
+
+for cmd in "${REQUIRED[@]}"; do
+
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        MISSING+=("$cmd")
+    fi
+
+done
+
+if command -v nc >/dev/null 2>&1; then
+    :
+else
+    MISSING+=("netcat")
+fi
+
+if (( ${#MISSING[@]} == 0 )); then
+
+    touch "$DEPS_MARKER"
+
+    [[ "$SILENT" != "true" ]] && {
+        echo -e "${GREEN}[OK] All dependencies already installed.${RESET}"
+        sleep 1
+    }
+
+    return 0
+
+fi
+
+[[ "$SILENT" != "true" ]] && {
+    echo -e "${YELLOW}[INFO] Missing:${RESET} ${MISSING[*]}"
+    echo
+}
+
+if command -v pkg >/dev/null 2>&1; then
+
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${CYAN}[TERMUX] Installing packages...${RESET}"
+
+    pkg update -y >/dev/null 2>&1
+
+    pkg install -y \
+        tor \
+        privoxy \
+        curl \
+        netcat-openbsd >/dev/null 2>&1
+
+elif command -v apt >/dev/null 2>&1; then
+
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${CYAN}[APT] Installing packages...${RESET}"
+
+    sudo apt update -y >/dev/null 2>&1
+
+    sudo apt install -y \
+        tor \
+        privoxy \
+        curl \
+        netcat-openbsd >/dev/null 2>&1
+
+elif command -v pacman >/dev/null 2>&1; then
+
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${CYAN}[PACMAN] Installing packages...${RESET}"
+
+    sudo pacman -Sy --noconfirm \
+        tor \
+        privoxy \
+        curl \
+        openbsd-netcat >/dev/null 2>&1
+
+elif command -v dnf >/dev/null 2>&1; then
+
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${CYAN}[DNF] Installing packages...${RESET}"
+
+    sudo dnf install -y \
+        tor \
+        privoxy \
+        curl \
+        nc >/dev/null 2>&1
+
+elif command -v yum >/dev/null 2>&1; then
+
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${CYAN}[YUM] Installing packages...${RESET}"
+
+    sudo yum install -y \
+        tor \
+        privoxy \
+        curl \
+        nc >/dev/null 2>&1
+
+elif command -v brew >/dev/null 2>&1; then
+
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${CYAN}[HOMEBREW] Installing packages...${RESET}"
+
+    brew install \
+        tor \
+        privoxy \
+        curl \
+        netcat >/dev/null 2>&1
+
+else
+
+    echo
+    echo -e "${RED}[ERROR] Unsupported package manager.${RESET}"
+    echo -e "${RED}[ERROR] Please install Tor, Privoxy, Curl and Netcat manually.${RESET}"
+    return 1
+
+fi
+
+if command -v tor >/dev/null 2>&1 &&
+   command -v curl >/dev/null 2>&1 &&
+   command -v nc >/dev/null 2>&1; then
+
+    touch "$DEPS_MARKER"
+
+    [[ "$SILENT" != "true" ]] && {
+        echo
+        echo -e "${GREEN}[SUCCESS] Dependencies installed successfully.${RESET}"
+        sleep 1
+    }
+
+    return 0
+
+fi
+
+echo
+echo -e "${RED}[ERROR] Dependency verification failed.${RESET}"
+
+return 1
+
+}
+
 
 check_tor() {
-    nc -z 127.0.0.1 "$TOR_SOCKS_PORT" >/dev/null 2>&1
+
+if ! nc -z 127.0.0.1 "$TOR_SOCKS_PORT" >/dev/null 2>&1; then
+    return 1
+fi
+
+local TEST_IP
+
+TEST_IP=$(curl \
+    --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+    --max-time 10 \
+    -s \
+    https://api64.ipify.org)
+
+[[ -n "$TEST_IP" ]]
+
 }
 
-check_privoxy() {
+
+check_privoxy_port() {
     nc -z 127.0.0.1 "$PRIVOXY_PORT" >/dev/null 2>&1
 }
 
+check_privoxy() {
+
+    check_privoxy_port || return 1
+
+    curl \
+        --proxy "http://127.0.0.1:${PRIVOXY_PORT}" \
+        --max-time 10 \
+        -s \
+        https://api64.ipify.org \
+        >/dev/null 2>&1
+}
+
 remember_ip() {
+
     local ip="$1"
-    [ -z "$ip" ] && return
-    IP_HISTORY+=("$ip")
-    if (( ${#IP_HISTORY[@]} > 15 )); then
-        IP_HISTORY=("${IP_HISTORY[@]:1}")
+
+    [[ -z "$ip" ]] && return
+
+    CURRENT_IP="$ip"
+
+    if [[ "$ip" == "$LAST_RECORDED_IP" ]]; then
+        return
     fi
+
+    LAST_RECORDED_IP="$ip"
+
+    IP_HISTORY+=("$ip")
+
+    ((UNIQUE_IP_COUNT++))
+
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | New Exit IP: $ip" >> "$LOG_FILE"
+
 }
 
 check_duplicate_ip() {
@@ -371,19 +562,42 @@ show_ip_history() {
 }
 
 start_tor_engine() {
-    banner
-    echo -e "${YELLOW}[+] Starting Tor + Privoxy engine (single node)...${RESET}"
-    matrix_burst
+
+    local SILENT="${1:-false}"
+
+    detect_platform
+
+    if [[ "$SILENT" != "true" ]]; then
+
+        clear
+
+        echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+        echo -e "${CYAN}║                GHOST ENGINE STARTUP               ║${RESET}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+        echo
+
+        printf "%-18s %s\n" "Platform:" "$PLATFORM_NAME"
+        printf "%-18s %s\n" "SOCKS5 Port:" "$TOR_SOCKS_PORT"
+        printf "%-18s %s\n" "Control Port:" "$TOR_CONTROL_PORT"
+        printf "%-18s %s\n" "HTTP Proxy Port:" "$PRIVOXY_PORT"
+
+        echo
+        echo -e "${YELLOW}[1/5] Cleaning Previous Session...${RESET}"
+    fi
 
     pkill tor 2>/dev/null
     pkill privoxy 2>/dev/null
 
-    rm -rf "$TOR_DIR"
+    sleep 2
+
     mkdir -p "$TOR_DIR"
-    : > "$LOG_FILE"
+    mkdir -p "$TOR_DIR/data"
+
+    touch "$LOG_FILE"
 
     local TORRC="$TOR_DIR/torrc"
-    cat <<EOF > "$TORRC"
+
+    cat > "$TORRC" <<EOF
 SocksPort 127.0.0.1:${TOR_SOCKS_PORT}
 ControlPort 127.0.0.1:${TOR_CONTROL_PORT}
 CookieAuthentication 0
@@ -391,28 +605,47 @@ AvoidDiskWrites 1
 DataDirectory ${TOR_DIR}/data
 EOF
 
-    tor -f "$TORRC" >>"$LOG_FILE" 2>&1 &
-    sleep 1
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${YELLOW}[2/5] Starting TOR Service...${RESET}"
 
-    echo -e "${CYAN}[*] Waiting for Tor to bootstrap...${RESET}"
-    local tries=0
-    local max_tries=30
-    while (( tries < max_tries )); do
-        if check_tor; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | Starting TOR" >> "$LOG_FILE"
+
+    tor -f "$TORRC" >> "$LOG_FILE" 2>&1 &
+
+    local TOR_READY=false
+
+    for ((i=1;i<=60;i++)); do
+
+        if nc -z 127.0.0.1 "$TOR_SOCKS_PORT" >/dev/null 2>&1; then
+            TOR_READY=true
             break
         fi
-        ((tries++))
+
         sleep 1
+
     done
 
-    if ! check_tor; then
-        echo -e "${RED}[!] Tor did not start correctly on ${TOR_SOCKS_PORT}.${RESET}"
-        echo -e "${YELLOW}Check logs via: Show Status & Last Logs.${RESET}"
-        sleep 2
+    if [[ "$TOR_READY" != "true" ]]; then
+
+        ((ERROR_COUNT++))
+
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | TOR startup failed" >> "$LOG_FILE"
+
+        [[ "$SILENT" != "true" ]] && {
+            echo
+            echo -e "${RED}[ERROR] TOR failed to start.${RESET}"
+            echo -e "${YELLOW}Check logs from Status Menu.${RESET}"
+            sleep 3
+        }
+
         return 1
+
     fi
 
-    cat <<EOF > "$PRIVOXY_CONF"
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${GREEN}[OK] TOR Online${RESET}"
+
+    cat > "$PRIVOXY_CONF" <<EOF
 listen-address 0.0.0.0:${PRIVOXY_PORT}
 toggle 1
 enable-remote-toggle 0
@@ -423,22 +656,125 @@ forwarded-connect-retries 1
 forward-socks5 / 127.0.0.1:${TOR_SOCKS_PORT} .
 EOF
 
-    privoxy "$PRIVOXY_CONF" >/dev/null 2>&1 &
-    sleep 2
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${YELLOW}[3/5] Starting HTTP Proxy...${RESET}"
 
-    if ! check_privoxy; then
-        echo -e "${RED}[!] Privoxy failed to start on ${PRIVOXY_PORT}.${RESET}"
-        sleep 2
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | Starting Privoxy" >> "$LOG_FILE"
+
+    privoxy "$PRIVOXY_CONF" >> "$LOG_FILE" 2>&1 &
+
+    local PROXY_READY=false
+
+    for ((i=1;i<=30;i++)); do
+
+        if nc -z 127.0.0.1 "$PRIVOXY_PORT" >/dev/null 2>&1; then
+            PROXY_READY=true
+            break
+        fi
+
+        sleep 1
+
+    done
+
+    if [[ "$PROXY_READY" != "true" ]]; then
+
+        ((ERROR_COUNT++))
+
+        echo "$(date '+%Y-%m-%d %H:%M:%S') | Privoxy startup failed" >> "$LOG_FILE"
+
+        [[ "$SILENT" != "true" ]] && {
+            echo
+            echo -e "${RED}[ERROR] Privoxy failed to start.${RESET}"
+            sleep 3
+        }
+
         return 1
+
     fi
 
-    banner
-    echo -e "${GREEN}[+] Ghost Engine ONLINE.${RESET}"
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${GREEN}[OK] Proxy Online${RESET}"
+
+    [[ "$SILENT" != "true" ]] && \
+    echo -e "${YELLOW}[4/5] Verifying Exit Node...${RESET}"
+
+    CURRENT_IP=$(curl \
+        --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+        --max-time 15 \
+        -s \
+        https://api64.ipify.org)
+
+    [[ -n "$CURRENT_IP" ]] && remember_ip "$CURRENT_IP"
+
+    LAST_START_TIME=$(date '+%H:%M:%S')
+
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+
+        PROXY_HOST=$(hostname -I 2>/dev/null | awk '{print $1}')
+
+        [[ -z "$PROXY_HOST" ]] && \
+        PROXY_HOST=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
+
+        [[ -z "$PROXY_HOST" ]] && \
+        PROXY_HOST="127.0.0.1"
+
+    else
+
+        PROXY_HOST="127.0.0.1"
+
+    fi
+
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | Engine Started Successfully" >> "$LOG_FILE"
+
+    [[ "$SILENT" == "true" ]] && return 0
+
     echo
-    echo -e "${CYAN}HTTP proxy for Wi-Fi / apps:${RESET} ${GREEN}127.0.0.1:${PRIVOXY_PORT}${RESET}"
+    echo -e "${GREEN}[5/5] Startup Complete${RESET}"
     echo
-    echo -e "${DIM}Tip: Wi-Fi → Modify network → Proxy: Manual → 127.0.0.1 : ${PRIVOXY_PORT}${RESET}"
+
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}        GHOST ENGINE ONLINE${RESET}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo
+
+    printf "%-18s %s\n" "Platform:" "$PLATFORM_NAME"
+    printf "%-18s %s\n" "Current IP:" "${CURRENT_IP:-UNKNOWN}"
+    printf "%-18s %s\n" "SOCKS5 Proxy:" "127.0.0.1:${TOR_SOCKS_PORT}"
+    printf "%-18s %s\n" "HTTP Proxy:" "${PROXY_HOST}:${PRIVOXY_PORT}"
+    printf "%-18s %s\n" "Started:" "$LAST_START_TIME"
+
+    echo
+
+    case "$PLATFORM_NAME" in
+
+        WSL)
+            echo -e "${YELLOW}Windows Setup:${RESET}"
+            echo -e "Use ${PROXY_HOST}:${PRIVOXY_PORT}"
+            echo
+            ;;
+
+        Termux)
+            echo -e "${YELLOW}Android Setup:${RESET}"
+            echo -e "Wi-Fi → Modify Network → Proxy → Manual"
+            echo -e "Host: 127.0.0.1"
+            echo -e "Port: ${PRIVOXY_PORT}"
+            echo
+            ;;
+
+        Linux)
+            echo -e "${YELLOW}Linux Setup:${RESET}"
+            echo -e "Configure your browser/app proxy settings."
+            echo
+            ;;
+
+        macOS)
+            echo -e "${YELLOW}macOS Setup:${RESET}"
+            echo -e "System Settings → Network → Proxies"
+            echo
+            ;;
+
+    esac
+
     read -p $'Press ENTER to continue... ' _
 }
 
