@@ -640,15 +640,46 @@ show_doc() {
     read -p "Press ENTER to continue..."
 }
 
+detect_docs_environment() {
+
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        DOCS_OS="WSL"
+        DOCS_RECOMMEND="WSL Guide"
+
+    elif command -v termux-info >/dev/null 2>&1; then
+        DOCS_OS="Termux"
+        DOCS_RECOMMEND="Termux Guide"
+
+    else
+        DOCS_OS="Linux"
+        DOCS_RECOMMEND="Linux Guide"
+    fi
+    
+    LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+
+    TOR_RUNNING="OFFLINE"
+    PROXY_RUNNING="OFFLINE"
+
+    pgrep tor >/dev/null && TOR_RUNNING="ONLINE"
+    pgrep privoxy >/dev/null && PROXY_RUNNING="ONLINE"
+}
+
 docs_screen() {
 
     while true; do
 
         clear
-
+        detect_docs_environment
         echo "=================================="
         echo "      DOCUMENTATION CENTER"
         echo "=================================="
+        echo
+        echo "Platform     : $DOCS_OS"
+        echo "Local IP     : ${LOCAL_IP:-Unknown}"
+        echo "TOR Status   : $TOR_RUNNING"
+        echo "Proxy Status : $PROXY_RUNNING"
+        echo
+        echo "Recommended  : $DOCS_RECOMMEND"
         echo
         echo "1. Quick Start"
         echo "0. Back"

@@ -1,0 +1,458 @@
+╔══════════════════════════════════════════════════════════════╗
+║            GHOST ENGINE TROUBLESHOOTING GUIDE               ║
+║                 Questions & Solutions FAQ                  ║
+╚══════════════════════════════════════════════════════════════╝
+
+REPOSITORY
+
+https://github.com/naborajs/Termux-Tor-IP-Rotator
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Ghost Engine starts but Verify TOR says OFFLINE
+
+Possible Causes:
+
+• No internet connection
+• TOR failed to start
+• SOCKS port not open
+• Firewall interference
+
+Checks:
+
+```
+ps aux | grep tor
+
+ss -tlnp | grep 9050
+```
+
+Expected:
+
+```
+TOR process running
+Port 9050 listening
+```
+
+Fix:
+
+```
+Restart Ghost Engine
+
+Option 1 → Start Engine
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: My browser still shows my real IP
+
+Possible Causes:
+
+• Browser not using proxy
+• Wrong proxy address
+• Wrong port
+• Browser launched before proxy was configured
+
+Fix:
+
+Verify:
+
+```
+HTTP Proxy:
+    127.0.0.1:8118
+```
+
+or for WSL:
+
+```
+WSL_IP:8118
+```
+
+Then visit:
+
+```
+https://check.torproject.org
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Terminal IP changes but browser IP does not
+
+Explanation:
+
+Terminal and browser are separate.
+
+Example:
+
+```
+Terminal
+    ↓
+    TOR
+    ↓
+Internet
+```
+
+Browser
+↓
+Direct Internet
+
+Result:
+
+```
+Terminal IP changes
+Browser IP stays real
+```
+
+Fix:
+
+Configure browser proxy.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Internet stops working after enabling proxy
+
+Possible Causes:
+
+• Ghost Engine stopped
+• Wrong proxy address
+• Privoxy not running
+
+Fix:
+
+Disable proxy.
+
+Restart Ghost Engine.
+
+Verify:
+
+```
+ps aux | grep privoxy
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Why do I keep getting the same TOR IP?
+
+Explanation:
+
+TOR does not guarantee a new exit node every rotation.
+
+TOR may reuse:
+
+• Exit Nodes
+• Circuits
+• Relays
+
+This is normal.
+
+Fix:
+
+Increase interval:
+
+```
+30-60 seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Auto Rotation stopped working
+
+Possible Causes:
+
+• TOR crashed
+• Android killed Termux
+• Control Port unavailable
+
+Fix:
+
+Restart Ghost Engine.
+
+Termux Users:
+
+```
+termux-wake-lock
+```
+
+Disable battery optimization.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: WSL proxy does not work
+
+Most Common Cause:
+
+Using:
+
+```
+127.0.0.1
+```
+
+instead of:
+
+```
+WSL_IP
+```
+
+Find IP:
+
+```
+hostname -I
+```
+
+Example:
+
+```
+172.25.56.176
+```
+
+Use:
+
+```
+172.25.56.176:8118
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Windows loses internet after proxy setup
+
+Cause:
+
+Windows is forwarding traffic to a proxy
+that is not responding.
+
+Fix:
+
+Disable Windows Proxy.
+
+Restart Ghost Engine.
+
+Enable Proxy again.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Why does Ghost Engine show a new IP but Chrome does not?
+
+Cause:
+
+Chrome is not using Ghost Engine.
+
+Check:
+
+```
+Chrome Proxy Settings
+```
+
+Verify:
+
+```
+check.torproject.org
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: What does 127.0.0.1 mean?
+
+127.0.0.1 means:
+
+```
+"This machine"
+```
+
+Linux:
+
+```
+Linux
+```
+
+WSL:
+
+```
+WSL
+```
+
+Windows:
+
+```
+Windows
+```
+
+These are not always the same thing.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: What does 0.0.0.0 mean?
+
+0.0.0.0 means:
+
+```
+Listen on all interfaces
+```
+
+Good for:
+
+```
+WSL → Windows communication
+```
+
+Example:
+
+```
+0.0.0.0:8118
+```
+
+Windows can access it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Ghost Engine says Proxy OFFLINE
+
+Check:
+
+```
+ps aux | grep privoxy
+```
+
+Check:
+
+```
+ss -tlnp | grep 8118
+```
+
+Fix:
+
+Restart Engine.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: What ports does Ghost Engine use?
+
+SOCKS5:
+
+```
+9050
+```
+
+Control Port:
+
+```
+9051
+```
+
+HTTP Proxy:
+
+```
+8118
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: How do I check if TOR is running?
+
+Command:
+
+```
+ps aux | grep tor
+```
+
+Expected:
+
+```
+tor process visible
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: How do I check if Privoxy is running?
+
+Command:
+
+```
+ps aux | grep privoxy
+```
+
+Expected:
+
+```
+privoxy process visible
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: How do I check my real IP?
+
+Command:
+
+```
+curl https://api64.ipify.org
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: How do I check my TOR IP?
+
+Command:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: How do I know Ghost Engine is working?
+
+Checklist:
+
+✓ Verify TOR = VERIFIED
+
+✓ TOR process running
+
+✓ Privoxy process running
+
+✓ TOR IP differs from real IP
+
+✓ check.torproject.org confirms TOR
+
+If all checks pass:
+
+```
+Ghost Engine is fully operational.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Is Ghost Engine a VPN?
+
+No.
+
+Ghost Engine uses:
+
+```
+TOR
+```
+
+not:
+
+```
+VPN
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q: Does Ghost Engine make me anonymous?
+
+No tool can guarantee complete anonymity.
+
+Ghost Engine improves privacy.
+
+You can still expose yourself by:
+
+• Logging into personal accounts
+• Sharing personal information
+• Downloading unsafe files
+• Using services tied to your identity
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF TROUBLESHOOTING GUIDE
+
+Ghost Engine v5
+NS CODEX • Naboraj Sarkar (Nishant)
