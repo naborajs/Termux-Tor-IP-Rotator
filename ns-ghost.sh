@@ -666,46 +666,110 @@ detect_docs_environment() {
 
 docs_screen() {
 
-    while true; do
 
-        clear
-        detect_docs_environment
-        echo "=================================="
-        echo "      DOCUMENTATION CENTER"
-        echo "=================================="
-        echo
-        echo "Platform     : $DOCS_OS"
-        echo "Local IP     : ${LOCAL_IP:-Unknown}"
-        echo "TOR Status   : $TOR_RUNNING"
-        echo "Proxy Status : $PROXY_RUNNING"
-        echo
-        echo "Recommended  : $DOCS_RECOMMEND"
-        echo
-        echo "1. Quick Start"
-        echo "0. Back"
-        echo
+while true; do
 
-        read -p "Choice: " doc_choice
+    clear
+    detect_docs_environment
 
-        case "$doc_choice" in
+    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║                DOCUMENTATION CENTER               ║${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+    echo
 
-            1)
-                show_doc "./docs/quickstart.txt"
-                ;;
+    echo -e "${GREEN}SYSTEM INFORMATION${RESET}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-            0)
-                return
-                ;;
+    printf "%-18s %s\n" "Platform:" "$DOCS_OS"
+    printf "%-18s %s\n" "Local IP:" "${LOCAL_IP:-Unknown}"
+    printf "%-18s %s\n" "TOR Status:" "$TOR_RUNNING"
+    printf "%-18s %s\n" "Proxy Status:" "$PROXY_RUNNING"
 
-            *)
-                echo "Invalid choice"
-                sleep 1
-                ;;
+    echo
+    echo -e "${YELLOW}RECOMMENDED GUIDE${RESET}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "⭐ $DOCS_RECOMMEND"
+    echo
 
-        esac
+    echo -e "${BLUE}AVAILABLE DOCUMENTATION${RESET}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    done
+    echo "1) 📖 Quick Start Guide"
+    echo "2) 🐧 Linux Guide"
+    echo "3) 🖥 WSL Guide"
+    echo "4) 🧠 WSL Deep Dive"
+    echo "5) 📱 Termux Guide"
+    echo "6) 🛠 Troubleshooting Guide"     
+
+    echo
+    echo "R) Open Recommended Guide"
+    echo "B) Back"
+
+    echo
+    read -p "Choice: " doc_choice
+
+    case "$doc_choice" in
+
+        1)
+            show_doc "./docs/quickstart.txt"
+            ;;
+
+        2)
+            show_doc "./docs/linux.txt"
+            ;;
+
+        3)
+            show_doc "./docs/wsl.txt"
+            ;;
+
+        4)
+            show_doc "./docs/wsl-explained.txt"
+            ;;
+
+        5)
+            show_doc "./docs/termux.txt"
+            ;;
+
+        6)
+            show_doc "./docs/troubleshooting.txt"
+            ;;
+
+        R|r)
+
+            case "$DOCS_OS" in
+
+                WSL)
+                    show_doc "./docs/wsl.txt"
+                    ;;
+
+                Termux)
+                    show_doc "./docs/termux.txt"
+                    ;;
+
+                Linux)
+                    show_doc "./docs/linux.txt"
+                    ;;
+
+            esac
+            ;;
+
+        B|b|0)
+            return
+            ;;
+
+        *)
+            echo
+            echo "Invalid choice."
+            sleep 1
+            ;;
+
+    esac
+
+done
+
+
 }
+
 
 about_screen() {
     banner
