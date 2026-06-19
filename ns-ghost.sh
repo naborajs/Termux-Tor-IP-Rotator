@@ -770,6 +770,70 @@ done
 
 }
 
+settings_menu() {
+
+    while true; do
+
+        clear
+
+        echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+        echo -e "${CYAN}║                   SETTINGS MENU                   ║${RESET}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+        echo
+
+        echo "1) Change Duplicate Threshold"
+        echo "2) Reset Session Statistics"
+        echo
+        echo "Current Duplicate Limit : $MAX_DUPLICATES"
+        echo "Current Rotations       : $TOTAL_ROTATIONS"
+        echo "Current Saved IPs       : ${#IP_HISTORY[@]}"
+        echo
+        echo "0) Back"
+        echo
+
+        read -p "Choice: " settings_choice
+
+        case "$settings_choice" in
+
+            1)
+                echo
+                read -p "Enter new duplicate limit: " new_limit
+
+                if [[ "$new_limit" =~ ^[0-9]+$ ]]; then
+                    MAX_DUPLICATES="$new_limit"
+                    echo
+                    echo "[SUCCESS] Duplicate threshold updated."
+                else
+                    echo
+                    echo "[ERROR] Invalid number."
+                fi
+
+                sleep 2
+                ;;
+
+            2)
+                TOTAL_ROTATIONS=0
+                IP_HISTORY=()
+                DUPLICATE_COUNT=0
+
+                echo
+                echo "[SUCCESS] Session statistics reset."
+                sleep 2
+                ;;
+
+            0)
+                return
+                ;;
+
+            *)
+                echo
+                echo "[ERROR] Invalid choice."
+                sleep 1
+                ;;
+        esac
+
+    done
+}
 
 about_screen() {
     banner
