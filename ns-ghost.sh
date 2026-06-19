@@ -26,6 +26,7 @@ RED="\e[38;5;196m"
 YELLOW="\e[38;5;226m"
 PURPLE="\e[38;5;129m"
 BLUE="\e[38;5;39m"
+MAG="\e[38;5;213m"
 DIM="\e[2m"
 BOLD="\e[1m"
 RESET="\e[0m"
@@ -540,38 +541,76 @@ main_menu() {
         matrix_burst
 
         echo
-        echo
         echo -e "${GREEN}╔══════════════════════════════════════════════════════════════════════════════╗${RESET}"
         echo -e "${GREEN}║                         👻 GHOST ENGINE COMMAND CENTER                     ║${RESET}"
         echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
         echo -e "${GREEN}║${RESET} 1 ▶ Start Engine      2 🔄 Auto Rotate      3 ♻ Rotate Once              ${GREEN}║${RESET}"
-        echo -e "${GREEN}║${RESET} 4 🌍 Current IP       5 📜 Logs & Status    6 📊 Dashboard               ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} 4 🌍 Current IP       5 📜 Logs & Status    6 🌐 Torify URL             ${GREEN}║${RESET}"
         echo -e "${GREEN}║${RESET} 7 🛡 Verify TOR       8 📡 Proxy Guide      9 ⚙ Settings                ${GREEN}║${RESET}"
         echo -e "${GREEN}║${RESET} D 📚 Documentation    A ℹ About            S ⛔ Stop Engine             ${GREEN}║${RESET}"
         echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
-        echo -e "${GREEN}║${RESET} 0 ❌ Exit                                                           ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} 0 ❌ Exit Ghost Engine                                            ${GREEN}║${RESET}"
         echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════════════════╝${RESET}"
-        echo        
         echo
 
         echo -ne "${GREEN}ghost-engine${RESET}@${CYAN}root${RESET}:${YELLOW}~${RESET}$ "
-        read choice
+        read -r choice
 
         case "$choice" in
-            1) start_tor_engine ;;
-            2) smart_rotate_loop ;;
-            3) single_rotate ;;
-            4) check_ip ;;
-            5) show_status ;;
-            6) torify_url ;;
-            7) about_screen ;;
-            8) stop_all ;;
+
+            1)
+                start_tor_engine
+                ;;
+
+            2)
+                smart_rotate_loop
+                ;;
+
+            3)
+                single_rotate
+                ;;
+
+            4)
+                check_ip
+                ;;
+
+            5)
+                show_status
+                ;;
+
+            6)
+                torify_url
+                ;;
+
+            7)
+                verify_tor
+                ;;
+
+            8)
+                proxy_guide
+                ;;
+
+            9)
+                settings_menu
+                ;;
+
+            D|d)
+                docs_screen
+                ;;
+
+            A|a)
+                about_screen
+                ;;
+
+            S|s)
+                stop_all
+                ;;
 
             0)
                 banner
                 echo
                 echo -e "${GREEN}[SYSTEM] Ghost Engine Shutdown Complete${RESET}"
-                echo -e "${CYAN}Stay Anonymous 👻${RESET}"
+                echo -e "${CYAN}Thank you for using Ghost Engine 👻${RESET}"
                 echo
                 exit 0
                 ;;
@@ -579,7 +618,7 @@ main_menu() {
             *)
                 echo
                 echo -e "${RED}[ERROR] Unknown command.${RESET}"
-                echo -e "${YELLOW}[TIP] Select a valid menu option.${RESET}"
+                echo -e "${YELLOW}[TIP] Available commands: 1-9, D, A, S, 0${RESET}"
                 sleep 2
                 ;;
         esac
