@@ -615,6 +615,31 @@ verify_tor() {
     read -p $'Press ENTER to continue... ' _
 }
 
+show_doc() {
+
+    local FILE="$1"
+
+    clear
+
+    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║                DOCUMENTATION VIEWER               ║${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+    echo
+
+    if [[ ! -f "$FILE" ]]; then
+        echo -e "${RED}[ERROR] Documentation file not found.${RESET}"
+        echo
+        read -p "Press ENTER to continue..."
+        return
+    fi
+
+    cat "$FILE"
+
+    echo
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    read -p "Press ENTER to continue..."
+}
+
 about_screen() {
     banner
     echo -e "${BOLD}${CYAN}About – NS GAMMING GHOST ENGINE v4 (HYBRID)${RESET}"
