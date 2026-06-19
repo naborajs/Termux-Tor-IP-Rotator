@@ -129,28 +129,6 @@ EOF
     UPTIME=$((NOW - SESSION_START))
     
     echo
-    echo -e "${PURPLE}╔════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${PURPLE}║                 SESSION STATS                    ║${RESET}"
-    echo -e "${PURPLE}╠════════════════════════════════════════════════════╣${RESET}"
-
-    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
-    "ROTATIONS" "$TOTAL_ROTATIONS"
-
-    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
-    "IPS SAVED" "${#IP_HISTORY[@]}"
-
-    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
-    "DUPLICATES" "$DUPLICATE_COUNT/$MAX_DUPLICATES"
-
-    printf "${PURPLE}║${RESET} %-13s │ %-28s ${PURPLE}║${RESET}\n" \
-    "UPTIME" "$(printf '%02dh %02dm %02ds' \
-    $((UPTIME/3600)) \
-    $(((UPTIME%3600)/60)) \
-    $((UPTIME%60)))"
-
-    echo -e "${PURPLE}╚════════════════════════════════════════════════════╝${RESET}"    
-
-    echo
 
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${CYAN}💡 Quick Tip:${RESET}"
@@ -495,7 +473,7 @@ smart_rotate_loop() {
 }
 
 torify_url() {
-    banner
+    
     if ! check_privoxy || ! check_tor; then
         echo -e "${RED}[!] Engine is not running. Starting it now...${RESET}"
         start_tor_engine || return
@@ -507,6 +485,92 @@ torify_url() {
     echo
     curl --proxy "http://127.0.0.1:${PRIVOXY_PORT}" -s "$URL"
     echo
+    read -p $'Press ENTER to continue... ' _
+}
+
+proxy_guide() {
+
+    clear
+
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║                    PROXY SETUP GUIDE                     ║${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${RESET}"
+    echo
+
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+
+        echo -e "${GREEN}[SYSTEM DETECTED] WSL (Windows Subsystem for Linux)${RESET}"
+        echo
+        echo -e "${YELLOW}STEP 1:${RESET} Start Ghost Engine"
+        echo -e "  1 ▶ Start Engine"
+        echo
+        echo -e "${YELLOW}STEP 2:${RESET} Open Windows Proxy Settings"
+        echo -e "  Settings → Network & Internet → Proxy"
+        echo
+        echo -e "${YELLOW}STEP 3:${RESET} Enable Manual Proxy"
+        echo -e "  Address : ${PROXY_HOST}"
+        echo -e "  Port    : ${PRIVOXY_PORT}"
+        echo
+        echo -e "${YELLOW}STEP 4:${RESET} Open Browser"
+        echo -e "  Chrome / Edge / Brave"
+        echo
+        echo -e "${YELLOW}STEP 5:${RESET} Verify"
+        echo -e "  Option 7 → Verify TOR"
+        echo
+        echo -e "${GREEN}[TIP]${RESET} Disable Windows Proxy when Ghost Engine is not running."
+
+    elif command -v termux-info >/dev/null 2>&1; then
+
+        echo -e "${GREEN}[SYSTEM DETECTED] Android Termux${RESET}"
+        echo
+        echo -e "${YELLOW}STEP 1:${RESET} Start Ghost Engine"
+        echo
+        echo -e "${YELLOW}STEP 2:${RESET} Open WiFi Settings"
+        echo -e "  WiFi → Current Network → Modify"
+        echo
+        echo -e "${YELLOW}STEP 3:${RESET} Proxy"
+        echo -e "  Manual"
+        echo
+        echo -e "  Host : 127.0.0.1"
+        echo -e "  Port : ${PRIVOXY_PORT}"
+        echo
+        echo -e "${YELLOW}STEP 4:${RESET} Verify TOR"
+
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+
+        echo -e "${GREEN}[SYSTEM DETECTED] macOS${RESET}"
+        echo
+        echo -e "System Settings → Network"
+        echo -e "Configure Proxy"
+        echo
+        echo -e "Host : 127.0.0.1"
+        echo -e "Port : ${PRIVOXY_PORT}"
+
+    else
+
+        echo -e "${GREEN}[SYSTEM DETECTED] Linux${RESET}"
+        echo
+        echo -e "Browser Proxy Settings"
+        echo
+        echo -e "Host : 127.0.0.1"
+        echo -e "Port : ${PRIVOXY_PORT}"
+
+    fi
+
+    echo
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${CYAN}Useful Commands${RESET}"
+    echo
+    echo -e "Normal IP:"
+    echo -e "  curl https://api64.ipify.org"
+    echo
+    echo -e "TOR IP:"
+    echo -e "  curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} https://api64.ipify.org"
+    echo
+    echo -e "Verify TOR:"
+    echo -e "  Menu Option 7"
+    echo
+
     read -p $'Press ENTER to continue... ' _
 }
 
