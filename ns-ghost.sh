@@ -348,83 +348,337 @@ EOF
 }
 
 stop_all() {
-    banner
-    echo -e "${YELLOW}[+] Stopping Tor & Privoxy...${RESET}"
+
+clear
+detect_platform
+
+echo -e "${RED}╔════════════════════════════════════════════════════╗${RESET}"
+echo -e "${RED}║                ENGINE SHUTDOWN                    ║${RESET}"
+echo -e "${RED}╚════════════════════════════════════════════════════╝${RESET}"
+echo
+
+echo -e "${YELLOW}[1/4] Stopping TOR Service...${RESET}"
+
+if pgrep tor >/dev/null; then
     pkill tor 2>/dev/null
+    sleep 1
+
+    if pgrep tor >/dev/null; then
+        echo -e "${RED}[FAILED] TOR still running.${RESET}"
+    else
+        echo -e "${GREEN}[OK] TOR stopped successfully.${RESET}"
+    fi
+else
+    echo -e "${YELLOW}[INFO] TOR already stopped.${RESET}"
+fi
+
+echo
+echo -e "${YELLOW}[2/4] Stopping Proxy Service...${RESET}"
+
+if pgrep privoxy >/dev/null; then
     pkill privoxy 2>/dev/null
-    echo -e "${GREEN}[+] Services stopped.${RESET}"
-    read -p $'Press ENTER to continue... ' _
+    sleep 1
+
+    if pgrep privoxy >/dev/null; then
+        echo -e "${RED}[FAILED] Proxy still running.${RESET}"
+    else
+        echo -e "${GREEN}[OK] Proxy stopped successfully.${RESET}"
+    fi
+else
+    echo -e "${YELLOW}[INFO] Proxy already stopped.${RESET}"
+fi
+
+echo
+echo -e "${YELLOW}[3/4] Cleaning Session...${RESET}"
+
+echo -e "${GREEN}[OK] Rotation Count : $TOTAL_ROTATIONS${RESET}"
+echo -e "${GREEN}[OK] Saved IPs      : ${#IP_HISTORY[@]}${RESET}"
+
+echo
+echo -e "${YELLOW}[4/4] Final Checks...${RESET}"
+
+if ! pgrep tor >/dev/null && ! pgrep privoxy >/dev/null; then
+    echo -e "${GREEN}[SUCCESS] Ghost Engine Shutdown Complete${RESET}"
+else
+    echo -e "${RED}[WARNING] Some processes may still be running.${RESET}"
+fi
+
+echo
+echo -e "${CYAN}Platform:${RESET} $PLATFORM_NAME"
+
+if grep -qi microsoft /proc/version 2>/dev/null; then
+
+    echo
+    echo -e "${YELLOW}WSL NOTICE${RESET}"
+    echo -e "If Windows Proxy is enabled,"
+    echo -e "disable it now to restore direct connectivity."
+
+fi
+
+echo
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+echo -e "${GREEN}Thank you for using Ghost Engine 👻${RESET}"
+echo -e "${DIM}Session Duration: $(printf '%02dh %02dm %02ds' \
+$(( ( $(date +%s ) - SESSION_START ) / 3600 )) \
+$(( (( $(date +%s ) - SESSION_START ) % 3600 ) / 60 )) \
+$(( ( $(date +%s ) - SESSION_START ) % 60 )))${RESET}"
+
+echo
+read -p $'Press ENTER to continue... ' _
+
 }
+
 
 show_status() {
-    banner
-    echo -e "${CYAN}[+] Tor Status:${RESET}"
-    if check_tor; then
-        echo -e "  ${GREEN}SocksPort 127.0.0.1:${TOR_SOCKS_PORT} (UP)${RESET}"
-    else
-        echo -e "  ${RED}SocksPort 127.0.0.1:${TOR_SOCKS_PORT} (DOWN)${RESET}"
-    fi
+
+clear
+detect_platform
+detect_status
+
+NOW=$(date +%s)
+UPTIME=$((NOW - SESSION_START))
+
+echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+echo -e "${CYAN}║                 SYSTEM STATUS                     ║${RESET}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+echo
+
+echo -e "${GREEN}ENGINE INFORMATION${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+printf "%-20s %s\n" "Platform:" "$PLATFORM_NAME"
+printf "%-20s %s\n" "Current IP:" "${CURRENT_IP:-UNKNOWN}"
+printf "%-20s %s\n" "Proxy:" "${PROXY_HOST}:${PRIVOXY_PORT}"
+
+echo
+
+echo -e "${GREEN}SERVICE STATUS${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if check_tor; then
+    echo -e "TOR Service      : ${GREEN}ONLINE${RESET}"
+else
+    echo -e "TOR Service      : ${RED}OFFLINE${RESET}"
+fi
+
+if check_privoxy; then
+    echo -e "Proxy Service    : ${GREEN}ONLINE${RESET}"
+else
+    echo -e "Proxy Service    : ${RED}OFFLINE${RESET}"
+fi
+
+echo
+echo -e "${GREEN}SESSION STATISTICS${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+printf "%-20s %s\n" "Rotations:" "$TOTAL_ROTATIONS"
+printf "%-20s %s\n" "Saved IPs:" "${#IP_HISTORY[@]}"
+printf "%-20s %s\n" "Duplicates:" "$DUPLICATE_COUNT/$MAX_DUPLICATES"
+
+printf "%-20s %s\n" "Uptime:" \
+"$(printf '%02dh %02dm %02ds' \
+$((UPTIME/3600)) \
+$(((UPTIME%3600)/60)) \
+$((UPTIME%60)))"
+
+echo
+
+echo -e "${GREEN}NETWORK PORTS${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+echo -e "SOCKS5 Port      : 127.0.0.1:${TOR_SOCKS_PORT}"
+echo -e "Control Port     : 127.0.0.1:${TOR_CONTROL_PORT}"
+echo -e "HTTP Proxy       : ${PROXY_HOST}:${PRIVOXY_PORT}"
+
+echo
+
+echo -e "${GREEN}RECENT LOGS${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+tail -n 8 "$LOG_FILE" 2>/dev/null || echo "No logs available."
+
+echo
+
+echo -e "${GREEN}IP HISTORY${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [[ ${#IP_HISTORY[@]} -eq 0 ]]; then
+
+    echo "No IP history available."
+
+else
+
+    for ip in "${IP_HISTORY[@]}"; do
+        echo "• $ip"
+    done
+
+fi
+
+echo
+
+if grep -qi microsoft /proc/version 2>/dev/null; then
+
+    echo -e "${YELLOW}WSL INFORMATION${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    echo -e "WSL IP : ${PROXY_HOST}"
+    echo -e "Windows users should use:"
+    echo -e "${PROXY_HOST}:${PRIVOXY_PORT}"
+
     echo
-    echo -e "${CYAN}[+] Privoxy:${RESET}"
-    if check_privoxy; then
-        echo -e "  ${GREEN}127.0.0.1:${PRIVOXY_PORT} (UP)${RESET}"
-    else
-        echo -e "  ${RED}127.0.0.1:${PRIVOXY_PORT} (DOWN)${RESET}"
-    fi
-    echo
-    echo -e "${CYAN}[+] Last Tor log lines:${RESET}"
-    echo -e "${DIM}"
-    tail -n 10 "$LOG_FILE" 2>/dev/null || echo "No logs yet."
-    echo -e "${RESET}"
-    echo
-    show_ip_history
-    echo
-    read -p $'Press ENTER to continue... ' _
+
+fi
+
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${CYAN}Tip:${RESET} Run Verify TOR regularly to confirm routing."
+echo
+
+read -p $'Press ENTER to continue... ' _
+
 }
+
 
 check_ip() {
-    banner
-    if ! check_privoxy || ! check_tor; then
-        echo -e "${RED}[!] Engine is not running. Starting it now...${RESET}"
-        start_tor_engine || return
-    fi
-    echo -e "${YELLOW}[+] Checking IP via Tor...${RESET}"
-    local IP
-    IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
-    remember_ip "$IP"
-    echo
-    matrix_burst
-    echo -e "${GREEN}🌍 Current Tor Exit IP: ${BOLD}${IP:-UNKNOWN}${RESET}"
-    echo -e "${BLUE}Proxy: 127.0.0.1:${PRIVOXY_PORT}${RESET}"
-    echo
-    show_ip_history
-    echo
-    read -p $'Press ENTER to continue... ' _
+
+clear
+
+if ! check_privoxy || ! check_tor; then
+
+    echo -e "${YELLOW}[SYSTEM] Engine offline. Starting...${RESET}"
+
+    start_tor_engine || return
+
+fi
+
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${CYAN}               IP INFORMATION                ${RESET}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo
+
+REAL_IP=$(curl -s --max-time 10 https://api64.ipify.org)
+
+TOR_IP=$(curl \
+    --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+    -s \
+    --max-time 15 \
+    https://api64.ipify.org)
+
+remember_ip "$TOR_IP"
+
+echo -e "🌍 TOR IP   : ${GREEN}${BOLD}${TOR_IP:-UNKNOWN}${RESET}"
+echo -e "💻 REAL IP  : ${YELLOW}${REAL_IP:-UNKNOWN}${RESET}"
+
+echo
+
+if [[ "$REAL_IP" != "$TOR_IP" && -n "$TOR_IP" ]]; then
+
+    echo -e "🛡 Status   : ${GREEN}TOR ACTIVE${RESET}"
+
+else
+
+    echo -e "⚠ Status   : ${RED}TOR NOT VERIFIED${RESET}"
+
+fi
+
+echo -e "🔒 SOCKS5   : 127.0.0.1:${TOR_SOCKS_PORT}"
+echo -e "🌐 PROXY    : ${PROXY_HOST}:${PRIVOXY_PORT}"
+
+echo
+
+if [[ ${#IP_HISTORY[@]} -gt 0 ]]; then
+
+    echo -e "${CYAN}Recent TOR IPs:${RESET}"
+
+    for ip in "${IP_HISTORY[@]: -5}"; do
+        echo " • $ip"
+    done
+
+fi
+
+echo
+read -p $'Press ENTER to continue... ' _
+
 }
 
+
 single_rotate() {
-    banner
-    if ! check_privoxy || ! check_tor; then
-        echo -e "${RED}[!] Engine is not running. Starting it now...${RESET}"
-        start_tor_engine || return
-    fi
-    echo -e "${YELLOW}[+] Sending NEWNYM signal (single rotate)...${RESET}"
-    echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" \
-        | nc 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1
-    sleep 3
-    local IP
-    IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} -s https://api64.ipify.org 2>/dev/null)
-    remember_ip "$IP"
-    ((TOTAL_ROTATIONS++))
-    echo
-    matrix_burst
-    echo -e "${GREEN}♻ Single Rotate Done${RESET}"
-    echo -e "${GREEN}New Tor Exit IP: ${BOLD}${IP:-UNKNOWN}${RESET}"
-    echo
-    show_ip_history
-    echo
-    read -p $'Press ENTER to continue... ' _
+
+clear
+
+if ! check_privoxy || ! check_tor; then
+
+    echo -e "${YELLOW}[SYSTEM] Engine offline. Starting...${RESET}"
+
+    start_tor_engine || return
+
+fi
+
+OLD_IP=$(curl \
+    --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+    -s \
+    --max-time 10 \
+    https://api64.ipify.org)
+
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${CYAN}              TOR IDENTITY ROTATION           ${RESET}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo
+
+echo -e "${YELLOW}[ROTATING] Requesting new TOR identity...${RESET}"
+
+echo -e "AUTHENTICATE \"\"\r\nSIGNAL NEWNYM\r\nQUIT" \
+    | nc 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1
+
+sleep 4
+
+NEW_IP=$(curl \
+    --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+    -s \
+    --max-time 10 \
+    https://api64.ipify.org)
+
+remember_ip "$NEW_IP"
+
+((TOTAL_ROTATIONS++))
+
+echo
+
+echo -e "📍 Previous IP : ${YELLOW}${OLD_IP:-UNKNOWN}${RESET}"
+echo -e "🌍 Current IP  : ${GREEN}${NEW_IP:-UNKNOWN}${RESET}"
+
+echo
+
+if [[ "$OLD_IP" != "$NEW_IP" ]]; then
+
+    echo -e "✅ Status      : ${GREEN}IP CHANGED${RESET}"
+
+else
+
+    echo -e "⚠ Status      : ${YELLOW}SAME EXIT NODE${RESET}"
+
+fi
+
+echo -e "🔄 Rotations   : $TOTAL_ROTATIONS"
+echo -e "📚 IP History  : ${#IP_HISTORY[@]}"
+
+echo
+
+if [[ ${#IP_HISTORY[@]} -gt 1 ]]; then
+
+    echo -e "${CYAN}Recent IPs:${RESET}"
+
+    for ip in "${IP_HISTORY[@]: -5}"; do
+        echo " • $ip"
+    done
+
+fi
+
+echo
+read -p $'Press ENTER to continue... ' _
+
 }
+
 
 smart_rotate_loop() {
     banner
@@ -473,146 +727,284 @@ smart_rotate_loop() {
 }
 
 torify_url() {
-    
-    if ! check_privoxy || ! check_tor; then
-        echo -e "${RED}[!] Engine is not running. Starting it now...${RESET}"
-        start_tor_engine || return
-    fi
-    echo -ne "${CYAN}Enter URL (example: https://ifconfig.me): ${RESET}"
-    read -r URL
-    [[ -z "$URL" ]] && { echo -e "${RED}[!] No URL entered.${RESET}"; sleep 1; return; }
-    echo -e "${YELLOW}[+] Fetching via Tor proxy...${RESET}"
+
+detect_platform
+
+if ! check_privoxy || ! check_tor; then
+
+    echo -e "${RED}[!] Engine is not running.${RESET}"
+    echo -e "${YELLOW}[+] Starting Ghost Engine...${RESET}"
+
+    start_tor_engine || return
+
+fi
+
+clear
+
+echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+echo -e "${CYAN}║                  TORIFY URL TOOL                  ║${RESET}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+echo
+
+echo -e "${GREEN}Platform:${RESET} $PLATFORM_NAME"
+echo -e "${GREEN}Proxy:${RESET} ${PROXY_HOST}:${PRIVOXY_PORT}"
+echo
+
+read -p "Enter URL: " URL
+
+if [[ -z "$URL" ]]; then
+
     echo
-    curl --proxy "http://127.0.0.1:${PRIVOXY_PORT}" -s "$URL"
+    echo -e "${RED}[ERROR] No URL entered.${RESET}"
+    sleep 2
+    return
+
+fi
+
+if [[ ! "$URL" =~ ^https?:// ]]; then
+
     echo
-    read -p $'Press ENTER to continue... ' _
+    echo -e "${YELLOW}[INFO] Adding https:// automatically...${RESET}"
+    URL="https://$URL"
+
+fi
+
+echo
+echo -e "${YELLOW}[+] Verifying TOR route...${RESET}"
+
+TOR_IP=$(curl \
+    --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+    -s \
+    https://api64.ipify.org)
+
+echo -e "${GREEN}[TOR EXIT]${RESET} ${TOR_IP:-UNKNOWN}"
+echo
+
+echo -e "${YELLOW}[+] Fetching URL through TOR...${RESET}"
+echo
+
+HTTP_CODE=$(curl \
+    --proxy "http://127.0.0.1:${PRIVOXY_PORT}" \
+    --max-time 20 \
+    -s \
+    -o /tmp/ghost_response.txt \
+    -w "%{http_code}" \
+    "$URL")
+
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${GREEN}Request Summary${RESET}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+echo -e "URL         : $URL"
+echo -e "Status Code : $HTTP_CODE"
+echo -e "TOR Exit IP : ${TOR_IP:-UNKNOWN}"
+
+echo
+
+if [[ "$HTTP_CODE" == "200" ]]; then
+
+    echo -e "${GREEN}[SUCCESS] Request completed.${RESET}"
+
+else
+
+    echo -e "${YELLOW}[WARNING] Server returned HTTP ${HTTP_CODE}.${RESET}"
+
+fi
+
+echo
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${GREEN}Response Preview${RESET}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo
+
+head -n 30 /tmp/ghost_response.txt
+
+echo
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+rm -f /tmp/ghost_response.txt
+
+echo
+read -p $'Press ENTER to continue... ' _
+
 }
 
-proxy_guide() {
 
-    clear
+project_info() {
 
-    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${CYAN}║                    PROXY SETUP GUIDE                     ║${RESET}"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${RESET}"
-    echo
 
-    if grep -qi microsoft /proc/version 2>/dev/null; then
+clear
 
-        echo -e "${GREEN}[SYSTEM DETECTED] WSL (Windows Subsystem for Linux)${RESET}"
-        echo
-        echo -e "${YELLOW}STEP 1:${RESET} Start Ghost Engine"
-        echo -e "  1 ▶ Start Engine"
-        echo
-        echo -e "${YELLOW}STEP 2:${RESET} Open Windows Proxy Settings"
-        echo -e "  Settings → Network & Internet → Proxy"
-        echo
-        echo -e "${YELLOW}STEP 3:${RESET} Enable Manual Proxy"
-        echo -e "  Address : ${PROXY_HOST}"
-        echo -e "  Port    : ${PRIVOXY_PORT}"
-        echo
-        echo -e "${YELLOW}STEP 4:${RESET} Open Browser"
-        echo -e "  Chrome / Edge / Brave"
-        echo
-        echo -e "${YELLOW}STEP 5:${RESET} Verify"
-        echo -e "  Option 7 → Verify TOR"
-        echo
-        echo -e "${GREEN}[TIP]${RESET} Disable Windows Proxy when Ghost Engine is not running."
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${RESET}"
+echo -e "${CYAN}║                 PROJECT & COMMUNITY HUB                  ║${RESET}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${RESET}"
+echo
 
-    elif command -v termux-info >/dev/null 2>&1; then
+echo -e "${GREEN}ABOUT GHOST ENGINE${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "Ghost Engine is an open-source TOR privacy toolkit"
+echo -e "built to help users learn networking, anonymity,"
+echo -e "proxy configuration and TOR routing."
+echo
+echo -e "Features:"
+echo -e " • TOR Integration"
+echo -e " • HTTP & SOCKS5 Proxy"
+echo -e " • Auto Identity Rotation"
+echo -e " • IP History Tracking"
+echo -e " • Multi-Platform Support"
+echo -e " • Documentation Center"
+echo
 
-        echo -e "${GREEN}[SYSTEM DETECTED] Android Termux${RESET}"
-        echo
-        echo -e "${YELLOW}STEP 1:${RESET} Start Ghost Engine"
-        echo
-        echo -e "${YELLOW}STEP 2:${RESET} Open WiFi Settings"
-        echo -e "  WiFi → Current Network → Modify"
-        echo
-        echo -e "${YELLOW}STEP 3:${RESET} Proxy"
-        echo -e "  Manual"
-        echo
-        echo -e "  Host : 127.0.0.1"
-        echo -e "  Port : ${PRIVOXY_PORT}"
-        echo
-        echo -e "${YELLOW}STEP 4:${RESET} Verify TOR"
+echo -e "${GREEN}CONTRIBUTING${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "Want to contribute?"
+echo
+echo -e "1. Fork the repository"
+echo -e "2. Create a feature branch"
+echo -e "3. Make improvements"
+echo -e "4. Submit a Pull Request"
+echo
+echo -e "All contributions are welcome."
+echo
 
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
+echo -e "${GREEN}PROJECT LINKS${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "⭐GitHub Repository:"
+echo -e "https://github.com/naborajs/Termux-Tor-IP-Rotator"
+echo
 
-        echo -e "${GREEN}[SYSTEM DETECTED] macOS${RESET}"
-        echo
-        echo -e "System Settings → Network"
-        echo -e "Configure Proxy"
-        echo
-        echo -e "Host : 127.0.0.1"
-        echo -e "Port : ${PRIVOXY_PORT}"
+echo -e "${GREEN}CONNECT WITH THE CREATOR${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "🌐 GitHub     : github.com/naborajs"
+echo -e "▶ YouTube    : @Nishant_sarkar"
+echo -e "📸 Instagram : @naborajs"
+echo -e "💬 Telegram  : @Nishantsarkar10k"
+echo -e "🐦 X/Twitter : @NSGAMMING699"
+echo -e "💼 LinkedIn  : naboraj-sarkar"
+echo
 
-    else
+echo -e "${GREEN}SPECIAL MESSAGE${RESET}"
+echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "\"Thank you for checking out Ghost Engine."
+echo -e "Whether you're here to learn, contribute,"
+echo -e "or just explore, you're part of the journey.\""
+echo
 
-        echo -e "${GREEN}[SYSTEM DETECTED] Linux${RESET}"
-        echo
-        echo -e "Browser Proxy Settings"
-        echo
-        echo -e "Host : 127.0.0.1"
-        echo -e "Port : ${PRIVOXY_PORT}"
+echo -e "${YELLOW}👻 Keep Learning. Keep Building. Keep Exploring.${RESET}"
+echo
+read -p $'Press ENTER to return... ' _
 
-    fi
-
-    echo
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${CYAN}Useful Commands${RESET}"
-    echo
-    echo -e "Normal IP:"
-    echo -e "  curl https://api64.ipify.org"
-    echo
-    echo -e "TOR IP:"
-    echo -e "  curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} https://api64.ipify.org"
-    echo
-    echo -e "Verify TOR:"
-    echo -e "  Menu Option 7"
-    echo
-
-    read -p $'Press ENTER to continue... ' _
 }
+
 
 verify_tor() {
 
-    banner
+banner
+detect_platform
 
-    echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${CYAN}║                TOR VERIFICATION                   ║${RESET}"
-    echo -e "${CYAN}╠════════════════════════════════════════════════════╣${RESET}"
+echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
+echo -e "${CYAN}║                TOR VERIFICATION                   ║${RESET}"
+echo -e "${CYAN}╠════════════════════════════════════════════════════╣${RESET}"
 
-    if ! check_tor; then
-        echo -e "${RED}║  TOR Status : OFFLINE                             ║${RESET}"
-        echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
-        echo
-        echo -e "${RED}[!] TOR is not running.${RESET}"
-        echo
-        read -p $'Press ENTER to continue... ' _
-        return
-    fi
+echo -e "${YELLOW}[1/5] Detecting Platform...${RESET}"
+echo -e "Platform: ${GREEN}$PLATFORM_NAME${RESET}"
+echo
 
-    local RESULT
-    RESULT=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
-        -s https://check.torproject.org/api/ip)
+echo -e "${YELLOW}[2/5] Checking Internet...${RESET}"
 
-    local IP
-    IP=$(curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
-        -s https://api64.ipify.org)
+if ! curl -s --max-time 10 https://api64.ipify.org >/dev/null; then
 
-    echo -e "${GREEN}║  TOR Status : VERIFIED                            ║${RESET}"
-    echo -e "${GREEN}║  Exit IP   : ${IP:-UNKNOWN}${RESET}"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
-
+    echo -e "${RED}[FAILED] No Internet Connection.${RESET}"
     echo
-    echo -e "${YELLOW}Raw Response:${RESET}"
-    echo "$RESULT"
-
-    echo
-    echo -e "${GREEN}[SUCCESS] Traffic is routed through TOR.${RESET}"
-    echo
-
     read -p $'Press ENTER to continue... ' _
+    return
+
+fi
+
+echo -e "${GREEN}[OK] Internet Reachable${RESET}"
+echo
+
+echo -e "${YELLOW}[3/5] Checking TOR Service...${RESET}"
+
+if ! check_tor; then
+
+    echo -e "${RED}[FAILED] TOR Service Offline${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
+    echo
+    echo -e "${YELLOW}Try:${RESET}"
+    echo -e "  1 ▶ Start Engine"
+    echo
+    read -p $'Press ENTER to continue... ' _
+    return
+
+fi
+
+echo -e "${GREEN}[OK] TOR Service Running${RESET}"
+echo
+
+echo -e "${YELLOW}[4/5] Checking Proxy Service...${RESET}"
+
+if check_privoxy; then
+    echo -e "${GREEN}[OK] Proxy Running${RESET}"
+else
+    echo -e "${RED}[WARNING] Proxy Offline${RESET}"
+fi
+
+echo
+
+echo -e "${YELLOW}[5/5] Verifying TOR Routing...${RESET}"
+
+REAL_IP=$(curl -s https://api64.ipify.org)
+
+TOR_IP=$(curl \
+    --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+    -s \
+    https://api64.ipify.org)
+
+if [[ -z "$TOR_IP" ]]; then
+
+    echo -e "${RED}[FAILED] Unable to obtain TOR Exit IP${RESET}"
+    echo
+    read -p $'Press ENTER to continue... ' _
+    return
+
+fi
+
+echo
+echo -e "${GREEN}╔════════════════════════════════════════════════════╗${RESET}"
+echo -e "${GREEN}║                 VERIFICATION PASSED               ║${RESET}"
+echo -e "${GREEN}╠════════════════════════════════════════════════════╣${RESET}"
+
+printf " %-18s %s\n" "Platform:" "$PLATFORM_NAME"
+printf " %-18s %s\n" "Real IP:" "${REAL_IP:-UNKNOWN}"
+printf " %-18s %s\n" "TOR Exit IP:" "${TOR_IP:-UNKNOWN}"
+printf " %-18s %s\n" "SOCKS5:" "127.0.0.1:${TOR_SOCKS_PORT}"
+printf " %-18s %s\n" "HTTP Proxy:" "${PROXY_HOST}:${PRIVOXY_PORT}"
+
+echo
+echo -e "${GREEN}[SUCCESS] Traffic is successfully routed through TOR.${RESET}"
+
+if [[ "$REAL_IP" == "$TOR_IP" ]]; then
+
+    echo
+    echo -e "${RED}[WARNING] Real IP and TOR IP are identical.${RESET}"
+    echo -e "${YELLOW}TOR routing may not be active.${RESET}"
+
+else
+
+    echo
+    echo -e "${GREEN}[OK] TOR Exit IP differs from your real IP.${RESET}"
+
+fi
+
+echo
+echo -e "${CYAN}Quick Test:${RESET}"
+echo -e "curl --socks5 127.0.0.1:${TOR_SOCKS_PORT} https://api64.ipify.org"
+
+echo
+read -p $'Press ENTER to continue... ' _
+
+
 }
 
 show_doc() {
@@ -836,30 +1228,88 @@ settings_menu() {
 }
 
 about_screen() {
-    banner
-    echo -e "${BOLD}${CYAN}About – NS GAMMING GHOST ENGINE v4 (HYBRID)${RESET}"
+
+    clear
+    detect_platform
+    detect_status
+
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${CYAN}║                     👻 GHOST ENGINE v5                           ║${RESET}"
+    echo -e "${CYAN}║              Advanced TOR Privacy Framework                      ║${RESET}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════╝${RESET}"
     echo
-    echo -e "${GREEN}- Brand      : NS GAMMING || Nishant Sarkar${RESET}"
-    echo -e "${GREEN}- Engine     : Single Tor node + Privoxy HTTP proxy${RESET}"
-    echo -e "${GREEN}- Features   : Auto-rotate, IP history, Torify URL${RESET}"
+
+    echo -e "${GREEN}PROJECT INFORMATION${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "Name        : Ghost Engine"
+    echo -e "Version     : v5"
+    echo -e "Developer   : Naboraj Sarkar (Nishant)"
+    echo -e "Brand       : NS GAMING"
+    echo -e "Platform    : $PLATFORM_NAME"
     echo
-    echo -e "${YELLOW}How it works:${RESET}"
-    echo -e "  • Starts Tor with SocksPort ${TOR_SOCKS_PORT} and ControlPort ${TOR_CONTROL_PORT}."
-    echo -e "  • Starts Privoxy on 127.0.0.1:${PRIVOXY_PORT} forwarding into Tor."
-    echo -e "  • Lets you rotate identity automatically or manually."
-    echo -e "  • Tracks your exit IP history for this session."
+
+    echo -e "${GREEN}CURRENT ENGINE STATUS${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "TOR Status      : $TOR_STATUS"
+    echo -e "Proxy Status    : $PROXY_STATUS"
+    echo -e "Current Exit IP : $CURRENT_IP"
+    echo -e "Proxy Endpoint  : ${PROXY_HOST}:${PRIVOXY_PORT}"
     echo
-    echo -e "${MAG}Security notes:${RESET}"
-    echo -e "  • No bash history is saved for this session."
-    echo -e "  • This tool does NOT log websites you visit."
-    echo -e "  • Your privacy still depends on YOUR behavior:"
-    echo -e "    - logging into real accounts,"
-    echo -e "    - giving personal info,"
-    echo -e "    - or downloading risky files."
+
+    echo -e "${GREEN}CORE FEATURES${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "✓ Automatic TOR Identity Rotation"
+    echo -e "✓ Manual Identity Rotation"
+    echo -e "✓ HTTP Proxy Support"
+    echo -e "✓ SOCKS5 Proxy Support"
+    echo -e "✓ Exit IP Monitoring"
+    echo -e "✓ IP History Tracking"
+    echo -e "✓ Duplicate IP Detection"
+    echo -e "✓ Auto Engine Recovery"
+    echo -e "✓ Documentation Center"
+    echo -e "✓ Multi Platform Support"
     echo
-    echo -e "${DIM}This is a privacy / learning tool, not a license for illegal activity.${RESET}"
+
+    echo -e "${GREEN}SUPPORTED PLATFORMS${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "🐧 Linux"
+    echo -e "🖥 WSL (Windows Subsystem for Linux)"
+    echo -e "📱 Android Termux"
+    echo -e "🍎 macOS"
     echo
-    read -p $'Press ENTER to go back... ' _
+
+    echo -e "${GREEN}HOW GHOST ENGINE WORKS${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "Application"
+    echo -e "     ↓"
+    echo -e "  Privoxy"
+    echo -e "     ↓"
+    echo -e "    TOR"
+    echo -e "     ↓"
+    echo -e " Internet"
+    echo
+    echo -e "Traffic is routed through TOR before reaching"
+    echo -e "its destination, helping improve privacy."
+    echo
+
+    echo -e "${GREEN}SECURITY NOTES${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "• Ghost Engine does not store browsing history."
+    echo -e "• Session history exists only during runtime."
+    echo -e "• TOR improves privacy but cannot guarantee anonymity."
+    echo -e "• Logging into personal accounts can reveal identity."
+    echo -e "• Always use common sense when browsing."
+    echo
+
+    echo -e "${GREEN}OPEN SOURCE${RESET}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "GitHub Repository:"
+    echo -e "https://github.com/naborajs/Termux-Tor-IP-Rotator"
+    echo
+
+    echo -e "${DIM}Built for learning, privacy, networking and TOR research.${RESET}"
+    echo
+    read -p $'Press ENTER to return... ' _
 }
 
 main_menu() {
@@ -873,7 +1323,7 @@ main_menu() {
         echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
         echo -e "${GREEN}║${RESET} 1 ▶ Start Engine      2 🔄 Auto Rotate      3 ♻ Rotate Once              ${GREEN}║${RESET}"
         echo -e "${GREEN}║${RESET} 4 🌍 Current IP       5 📜 Logs & Status    6 🌐 Torify URL             ${GREEN}║${RESET}"
-        echo -e "${GREEN}║${RESET} 7 🛡 Verify TOR       8 📡 Proxy Guide      9 ⚙ Settings                ${GREEN}║${RESET}"
+        echo -e "${GREEN}║${RESET} 7 🛡 Verify TOR       8 ❤️ Project Info     9 ⚙ Settings                ${GREEN}║${RESET}"
         echo -e "${GREEN}║${RESET} D 📚 Documentation    A ℹ About            S ⛔ Stop Engine             ${GREEN}║${RESET}"
         echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════════════╣${RESET}"
         echo -e "${GREEN}║${RESET} 0 ❌ Exit Ghost Engine                                            ${GREEN}║${RESET}"
@@ -914,7 +1364,7 @@ main_menu() {
                 ;;
 
             8)
-                proxy_guide
+                project_info
                 ;;
 
             9)
