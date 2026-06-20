@@ -1,0 +1,261 @@
+╔══════════════════════════════════════════════════════════════╗
+║                  GHOST ENGINE LINUX GUIDE                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+REPOSITORY
+
+https://github.com/naborajs/Termux-Tor-IP-Rotator
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SETUP
+
+1. Clone the repository
+
+   git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
+
+2. Enter the directory
+
+   cd Termux-Tor-IP-Rotator
+
+3. Install Ghost Engine
+
+   bash install.sh
+
+4. Launch Ghost Engine
+
+   ns-ghost
+
+5. Start the Engine
+
+   1 ▶ Start Engine
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY TOR
+
+Menu:
+
+```
+7 ▶ Verify TOR
+```
+
+Expected:
+
+```
+TOR Status : VERIFIED
+```
+
+or manually:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+If you receive an IP address,
+TOR is working.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USE WITH BROWSERS
+
+HTTP Proxy:
+
+```
+Host : 127.0.0.1
+Port : 8118
+```
+
+SOCKS5 Proxy:
+
+```
+Host : 127.0.0.1
+Port : 9050
+```
+
+Firefox:
+
+```
+Settings
+→ Network Settings
+→ Manual Proxy Configuration
+```
+
+Chrome / Brave:
+
+```
+Use system proxy settings
+or launch with proxy arguments.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON PROBLEMS
+
+Problem:
+
+```
+Verify TOR shows OFFLINE
+```
+
+Fix:
+
+```
+Restart Ghost Engine
+```
+
+Check:
+
+```
+ps aux | grep tor
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Browser shows real IP
+```
+
+Cause:
+
+```
+Browser is not using Ghost Engine proxy.
+```
+
+Fix:
+
+```
+Verify:
+
+    Host : 127.0.0.1
+    Port : 8118
+```
+
+Test:
+
+```
+curl --proxy http://127.0.0.1:8118 https://api64.ipify.org
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Internet stops working after enabling proxy
+```
+
+Cause:
+
+```
+Ghost Engine is not running.
+```
+
+Fix:
+
+```
+Start Ghost Engine again
+```
+
+or
+
+```
+Disable browser/system proxy.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Exit IP is not changing
+```
+
+Cause:
+
+```
+TOR may reuse exit nodes.
+```
+
+Fix:
+
+```
+Use:
+
+    2 ▶ Auto Rotate
+```
+
+Recommended interval:
+
+```
+    15-30 seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Port already in use
+```
+
+Check:
+
+```
+ss -tlnp | grep 9050
+```
+
+Check:
+
+```
+ss -tlnp | grep 8118
+```
+
+Restart:
+
+```
+1 ▶ Start Engine
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USEFUL COMMANDS
+
+Check normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+Check TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+Check TOR process:
+
+```
+ps aux | grep tor
+```
+
+Check Privoxy process:
+
+```
+ps aux | grep privoxy
+```
+
+Check listening ports:
+
+```
+ss -tlnp
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF LINUX GUIDE
+
+Ghost Engine v5
+NS CODEX • Naboraj Sarkar (Nishant)

@@ -1,0 +1,488 @@
+╔══════════════════════════════════════════════════════════════╗
+║                   GHOST ENGINE WSL GUIDE                    ║
+║          Windows Subsystem for Linux (WSL)                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+REPOSITORY
+
+https://github.com/naborajs/Termux-Tor-IP-Rotator
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT
+
+WSL is NOT normal Linux.
+
+Ghost Engine runs inside WSL, but most users want to use
+Chrome, Edge or Brave running on Windows.
+
+Because of this, Windows must be able to reach the proxy
+running inside WSL.
+
+Most issues happen because of incorrect proxy settings.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SETUP
+
+1. Clone Repository
+
+   git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
+
+2. Enter Directory
+
+   cd Termux-Tor-IP-Rotator
+
+3. Install Ghost Engine
+
+   bash install.sh
+
+4. Launch Ghost Engine
+
+   ns-ghost
+
+5. Start Engine
+
+   1 ▶ Start Engine
+
+Wait until:
+
+```
+Ghost Engine ONLINE
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY TOR
+
+Menu:
+
+```
+7 ▶ Verify TOR
+```
+
+Expected:
+
+```
+TOR Status : VERIFIED
+```
+
+or manually:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+If an IP appears:
+
+```
+TOR is working.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY PRIVOXY
+
+Run:
+
+```
+ss -tlnp | grep 8118
+```
+
+Expected:
+
+```
+LISTEN ... 0.0.0.0:8118
+```
+
+If nothing appears:
+
+```
+Restart Ghost Engine
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FIND YOUR WSL IP
+
+Run:
+
+```
+hostname -I
+```
+
+Example:
+
+```
+172.25.56.176
+```
+
+Your IP will be different.
+
+Use the FIRST IP displayed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WINDOWS PROXY SETUP
+
+Open:
+
+```
+Settings
+→ Network & Internet
+→ Proxy
+```
+
+Enable:
+
+```
+Manual Proxy Setup
+```
+
+Enter:
+
+```
+Address:
+    YOUR_WSL_IP
+```
+
+Example:
+
+```
+    172.25.56.176
+
+Port:
+    8118
+```
+
+Save Settings.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY WINDOWS CONNECTION
+
+Open:
+
+```
+Chrome
+Edge
+Brave
+```
+
+Visit:
+
+```
+https://check.torproject.org
+```
+
+Expected:
+
+```
+Congratulations.
+This browser is configured to use TOR.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TEST TOR MANUALLY
+
+Normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+Expected:
+
+```
+Different IP addresses
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON PROBLEMS
+
+Problem:
+
+```
+Browser still shows real IP
+```
+
+Cause:
+
+```
+Windows is not using Ghost Engine proxy.
+```
+
+Fix:
+
+Verify:
+
+```
+Windows Proxy Enabled
+```
+
+Verify:
+
+```
+Address = WSL IP
+```
+
+Verify:
+
+```
+Port = 8118
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Internet stops working after enabling proxy
+```
+
+Cause:
+
+```
+Ghost Engine is not running.
+```
+
+Cause:
+
+```
+Wrong WSL IP.
+```
+
+Fix:
+
+Disable Windows Proxy.
+
+Restart Ghost Engine.
+
+Reconfigure Proxy.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Proxy works in terminal but not browser
+```
+
+Cause:
+
+```
+Browser was started before proxy was enabled.
+```
+
+Fix:
+
+Close browser completely.
+
+Reopen browser.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Verify TOR says OFFLINE
+```
+
+Fix:
+
+Check TOR:
+
+```
+ps aux | grep tor
+```
+
+Check SOCKS5:
+
+```
+ss -tlnp | grep 9050
+```
+
+Restart:
+
+```
+1 ▶ Start Engine
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Exit IP not changing
+```
+
+Cause:
+
+```
+TOR reused the same exit node.
+```
+
+This is normal.
+
+Fix:
+
+Use:
+
+```
+2 ▶ Auto Rotate
+```
+
+Recommended:
+
+```
+15-30 seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Windows cannot connect to proxy
+```
+
+Check:
+
+```
+ss -tlnp | grep 8118
+```
+
+Expected:
+
+```
+0.0.0.0:8118
+```
+
+Bad:
+
+```
+127.0.0.1:8118
+```
+
+If you see:
+
+```
+127.0.0.1:8118
+```
+
+Windows cannot access the proxy.
+
+Ghost Engine should be configured to listen on:
+
+```
+0.0.0.0:8118
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+WSL IP changed
+```
+
+Cause:
+
+```
+WSL restarted.
+```
+
+Fix:
+
+Run:
+
+```
+hostname -I
+```
+
+Update Windows Proxy Settings.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USEFUL COMMANDS
+
+Show WSL IP:
+
+```
+hostname -I
+```
+
+Check TOR:
+
+```
+ps aux | grep tor
+```
+
+Check Privoxy:
+
+```
+ps aux | grep privoxy
+```
+
+Check SOCKS5 Port:
+
+```
+ss -tlnp | grep 9050
+```
+
+Check HTTP Proxy:
+
+```
+ss -tlnp | grep 8118
+```
+
+Check Normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+Check TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK HEALTH CHECK
+
+All commands below should work:
+
+```
+hostname -I
+
+ps aux | grep tor
+
+ps aux | grep privoxy
+
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+
+ss -tlnp | grep 8118
+```
+
+If all succeed:
+
+```
+Ghost Engine is operational.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF WSL GUIDE
+
+Ghost Engine v5
+NS CODEX • Naboraj Sarkar (Nishant)

@@ -1,0 +1,438 @@
+╔══════════════════════════════════════════════════════════════╗
+║                 GHOST ENGINE TERMUX GUIDE                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+REPOSITORY
+
+https://github.com/naborajs/Termux-Tor-IP-Rotator
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SETUP
+
+1. Install Termux
+
+Download the latest Termux release from:
+
+```
+https://github.com/termux/termux-app
+```
+
+Avoid outdated Play Store versions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. Update Packages
+
+Run:
+
+```
+pkg update -y
+pkg upgrade -y
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3. Install Ghost Engine
+
+Clone Repository:
+
+```
+git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
+```
+
+Enter Directory:
+
+```
+cd Termux-Tor-IP-Rotator
+```
+
+Run Installer:
+
+```
+bash install.sh
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. Launch Ghost Engine
+
+Run:
+
+```
+ns-ghost
+```
+
+Start Engine:
+
+```
+1 ▶ Start Engine
+```
+
+Wait until:
+
+```
+Ghost Engine ONLINE
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFY TOR
+
+Menu:
+
+```
+7 ▶ Verify TOR
+```
+
+Expected:
+
+```
+TOR Status : VERIFIED
+```
+
+or manually:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+If an IP appears:
+
+```
+TOR is working.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANDROID CONNECTIVITY
+
+IMPORTANT
+
+Ghost Engine only affects traffic that goes through its proxy.
+
+Simply running TOR does NOT automatically route all Android traffic through TOR.
+
+Applications must use:
+
+```
+HTTP Proxy:
+    127.0.0.1:8118
+```
+
+or
+
+```
+SOCKS5:
+    127.0.0.1:9050
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USING WITH BROWSERS
+
+Recommended:
+
+```
+Firefox
+```
+
+Open:
+
+```
+Settings
+→ Network Settings
+→ Manual Proxy Configuration
+```
+
+HTTP Proxy:
+
+```
+127.0.0.1
+```
+
+Port:
+
+```
+8118
+```
+
+Save and restart Firefox.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USING WITH ANDROID APPS
+
+Most Android apps do NOT support custom proxies.
+
+Options:
+
+• Use a browser configured with Ghost Engine
+• Use a VPN-based proxy application
+• Use applications with SOCKS5 support
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BATTERY OPTIMIZATION
+
+Android may kill Termux in the background.
+
+Open:
+
+```
+Settings
+→ Apps
+→ Termux
+→ Battery
+```
+
+Set:
+
+```
+Unrestricted
+```
+
+or
+
+```
+No Restrictions
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WAKE LOCK
+
+Prevent Android from sleeping:
+
+```
+termux-wake-lock
+```
+
+Release lock:
+
+```
+termux-wake-unlock
+```
+
+Recommended during:
+
+• Auto Rotation
+• Long Sessions
+• Testing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON PROBLEMS
+
+Problem:
+
+```
+Verify TOR shows OFFLINE
+```
+
+Fix:
+
+Check TOR process:
+
+```
+ps aux | grep tor
+```
+
+Restart:
+
+```
+1 ▶ Start Engine
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+No Internet after enabling proxy
+```
+
+Cause:
+
+```
+Ghost Engine is not running.
+```
+
+Fix:
+
+```
+Disable proxy
+```
+
+or
+
+```
+Start Ghost Engine again
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Browser shows real IP
+```
+
+Cause:
+
+```
+Browser is not using the proxy.
+```
+
+Fix:
+
+Verify:
+
+```
+Host : 127.0.0.1
+Port : 8118
+```
+
+Test:
+
+```
+curl --proxy http://127.0.0.1:8118 https://api64.ipify.org
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Exit IP does not change
+```
+
+Cause:
+
+```
+TOR may reuse exit nodes.
+```
+
+Fix:
+
+Use:
+
+```
+2 ▶ Auto Rotate
+```
+
+Recommended:
+
+```
+15-30 seconds
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Auto Rotation stops
+```
+
+Cause:
+
+```
+Android killed Termux.
+```
+
+Fix:
+
+• Disable Battery Optimization
+• Use termux-wake-lock
+• Keep Termux running
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem:
+
+```
+Installer fails
+```
+
+Update packages:
+
+```
+pkg update -y
+pkg upgrade -y
+```
+
+Then run:
+
+```
+bash install.sh
+```
+
+again.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USEFUL COMMANDS
+
+Check normal IP:
+
+```
+curl https://api64.ipify.org
+```
+
+Check TOR IP:
+
+```
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+Check TOR process:
+
+```
+ps aux | grep tor
+```
+
+Check Privoxy:
+
+```
+ps aux | grep privoxy
+```
+
+Check SOCKS5 port:
+
+```
+ss -tlnp | grep 9050
+```
+
+Check HTTP proxy:
+
+```
+ss -tlnp | grep 8118
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK HEALTH CHECK
+
+All commands below should work:
+
+```
+ps aux | grep tor
+
+ps aux | grep privoxy
+
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+If all succeed:
+
+```
+Ghost Engine is operational.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF TERMUX GUIDE
+
+Ghost Engine v5
+NS GAMING • Naboraj Sarkar (Nishant)

@@ -1,0 +1,246 @@
+╔══════════════════════════════════════════════════════════════╗
+║                 WSL EXPLAINED FOR HUMANS                    ║
+╚══════════════════════════════════════════════════════════════╝
+
+A REAL STORY
+
+Imagine you have two houses.
+
+House #1
+
+```
+Windows
+```
+
+House #2
+
+```
+WSL Linux
+```
+
+Even though they live on the same computer,
+they are not the same thing.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT HAPPENED TO ME?
+
+I started Ghost Engine.
+
+Ghost Engine showed:
+
+```
+Current TOR IP:
+192.xxx.xxx.xxx
+```
+
+I thought:
+
+```
+Great!
+My browser should now use TOR.
+```
+
+But Chrome still showed my real IP.
+
+Why?
+
+Because TOR was running inside WSL,
+not inside Windows.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE BIGGEST MISTAKE
+
+I used:
+
+```
+127.0.0.1
+```
+
+as my Windows proxy.
+
+Looks correct.
+
+But it failed.
+
+Why?
+
+Because:
+
+Windows sees:
+
+```
+127.0.0.1
+```
+
+as Windows itself.
+
+NOT WSL.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT IS 127.0.0.1?
+
+127.0.0.1 means:
+
+```
+"This device"
+```
+
+For Windows:
+
+```
+Windows
+```
+
+For WSL:
+
+```
+WSL
+```
+
+They are different.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE SOLUTION
+
+Find WSL IP:
+
+```
+hostname -I
+```
+
+Example:
+
+```
+172.25.56.176
+```
+
+Then Windows can reach WSL using:
+
+```
+172.25.56.176:8118
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHY DID INTERNET STOP WORKING?
+
+Because Windows was told:
+
+```
+Send all traffic to:
+172.25.56.176:8118
+```
+
+But Ghost Engine was not running.
+
+Windows sent traffic.
+
+Nobody answered.
+
+Internet stopped.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT IS PRIVOXY?
+
+Browser
+↓
+Privoxy
+↓
+TOR
+↓
+Internet
+
+Privoxy translates normal browser traffic
+into traffic TOR can understand.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT IS 0.0.0.0?
+
+Bad:
+
+```
+127.0.0.1:8118
+```
+
+Only WSL can see it.
+
+Good:
+
+```
+0.0.0.0:8118
+```
+
+Windows can see it.
+Linux can see it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHY DID THE IP CHANGE IN TERMINAL
+BUT NOT IN CHROME?
+
+Terminal:
+
+```
+Using TOR
+```
+
+Chrome:
+
+```
+Not using TOR
+```
+
+So:
+
+Terminal IP:
+Changed
+
+Chrome IP:
+Stayed real
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HOW TO KNOW EVERYTHING IS WORKING
+
+Ghost Engine:
+
+```
+Verify TOR = VERIFIED
+```
+
+Terminal:
+
+```
+TOR IP different from real IP
+```
+
+Browser:
+
+```
+check.torproject.org
+```
+
+Shows:
+
+```
+Congratulations.
+This browser is configured to use TOR.
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CONGRATULATIONS
+
+If you understand this document,
+you understand more about networking
+than most beginners.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF WSL DEEP DIVE
