@@ -1323,7 +1323,6 @@ bash uninstall.sh
   </a>
 </div>
 
-
 ---
 
 <div align="center">
