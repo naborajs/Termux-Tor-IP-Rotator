@@ -188,7 +188,7 @@ The installer will automatically:
     prepares the runtime environment, and sets up the global <code>ns-ghost</code> launcher.
   </p>
 
-  <img src="assets/INSTALLER_PRIVEW.PNG" alt="Ghost Engine Installer Preview" width="96%" />
+  <img src="assets/INSTALLER_PRIVEW.png" alt="Ghost Engine Installer Preview" width="96%" />
   <br />
   <sub><b>Ghost Engine installer running in the terminal</b></sub>
 
