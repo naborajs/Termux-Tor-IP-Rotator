@@ -5,7 +5,11 @@ set -e
 
 INSTALL_NAME="ns-ghost"
 SCRIPT_NAME="ns-ghost.sh"
+INSTALL_SCRIPT="install.sh"
+UPDATE_SCRIPT="update.sh"
+UNINSTALL_SCRIPT="uninstall.sh"
 REPO_URL="https://github.com/naborajs/Termux-Tor-IP-Rotator.git"
+REPO_NAME="Termux-Tor-IP-Rotator"
 
 GREEN="\e[32m"
 YELLOW="\e[33m"
@@ -83,7 +87,7 @@ show_environment_info() {
 
 check_repo_files() {
 
-    echo -e "${YELLOW}[1/8] Checking repository files...${RESET}"
+    echo -e "${YELLOW}[1/9] Checking repository files...${RESET}"
 
     if [[ ! -f "$SCRIPT_NAME" ]]; then
         echo -e "${RED}[ERROR] Cannot find ${SCRIPT_NAME} in the current directory.${RESET}"
@@ -95,16 +99,48 @@ check_repo_files() {
         exit 1
     fi
 
-    chmod +x "$SCRIPT_NAME"
-
     echo -e "${GREEN}[OK] Main script found.${RESET}"
+    echo
+}
+
+prepare_shell_scripts() {
+
+    echo -e "${YELLOW}[2/9] Preparing Ghost Engine shell scripts...${RESET}"
+
+    local scripts=(
+        "$SCRIPT_NAME"
+        "$INSTALL_SCRIPT"
+        "$UPDATE_SCRIPT"
+        "$UNINSTALL_SCRIPT"
+    )
+
+    local script
+
+    for script in "${scripts[@]}"; do
+
+        if [[ -f "$script" ]]; then
+
+            sed -i 's/\r$//' "$script" 2>/dev/null || true
+
+            if chmod +x "$script" 2>/dev/null; then
+                echo -e "${GREEN}[OK]${RESET} Prepared ${script}"
+            else
+                echo -e "${YELLOW}[WARN]${RESET} Could not mark ${script} executable"
+            fi
+
+        else
+            echo -e "${YELLOW}[SKIP]${RESET} ${script} not found"
+        fi
+
+    done
+
     echo
 }
 
 check_sudo_if_needed() {
 
     if [[ "$PLATFORM" == "linux" || "$PLATFORM" == "wsl" ]]; then
-        echo -e "${YELLOW}[2/8] Checking sudo access...${RESET}"
+        echo -e "${YELLOW}[3/9] Checking sudo access...${RESET}"
 
         if sudo -v >/dev/null 2>&1; then
             SUDO_AVAILABLE=true
@@ -120,7 +156,7 @@ check_sudo_if_needed() {
 
 disable_conflicting_services() {
 
-    echo -e "${YELLOW}[3/8] Checking for conflicting Tor / Privoxy services...${RESET}"
+    echo -e "${YELLOW}[4/9] Checking for conflicting Tor / Privoxy services...${RESET}"
 
     case "$PLATFORM" in
 
@@ -206,16 +242,16 @@ install_dependencies() {
 
 verify_dependencies() {
 
-    echo -e "${YELLOW}[5/8] Verifying installed dependencies...${RESET}"
+    echo -e "${YELLOW}[6/9] Verifying installed dependencies...${RESET}"
 
-    local FAIL=0
+    local fail=0
 
     for cmd in tor privoxy curl; do
         if command -v "$cmd" >/dev/null 2>&1; then
             echo -e "${GREEN}[OK]${RESET} $cmd → $(command -v "$cmd")"
         else
             echo -e "${RED}[MISSING]${RESET} $cmd"
-            FAIL=1
+            fail=1
         fi
     done
 
@@ -223,12 +259,12 @@ verify_dependencies() {
         echo -e "${GREEN}[OK]${RESET} netcat available"
     else
         echo -e "${RED}[MISSING]${RESET} netcat / nc"
-        FAIL=1
+        fail=1
     fi
 
     echo
 
-    if (( FAIL != 0 )); then
+    if (( fail != 0 )); then
         echo -e "${RED}[ERROR] Some dependencies are missing. Installation cannot continue.${RESET}"
         exit 1
     fi
@@ -239,7 +275,7 @@ verify_dependencies() {
 
 install_binary() {
 
-    echo -e "${YELLOW}[6/8] Installing Ghost Engine binary...${RESET}"
+    echo -e "${YELLOW}[7/9] Installing Ghost Engine binary...${RESET}"
 
     mkdir -p "$BIN_DIR"
     cp "$SCRIPT_NAME" "$BIN_DIR/$INSTALL_NAME"
@@ -251,7 +287,7 @@ install_binary() {
 
 ensure_path() {
 
-    echo -e "${YELLOW}[7/8] Checking PATH configuration...${RESET}"
+    echo -e "${YELLOW}[8/9] Checking PATH configuration...${RESET}"
 
     case "$PLATFORM" in
 
@@ -295,7 +331,7 @@ ensure_path() {
 
 show_post_install_guide() {
 
-    echo -e "${YELLOW}[8/8] Final setup guide${RESET}"
+    echo -e "${YELLOW}[9/9] Final setup guide${RESET}"
     echo
 
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
@@ -364,6 +400,7 @@ main() {
     detect_platform
     show_environment_info
     check_repo_files
+    prepare_shell_scripts
     check_sudo_if_needed
     disable_conflicting_services
     install_dependencies

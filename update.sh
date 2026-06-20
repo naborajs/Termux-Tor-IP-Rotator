@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # NABORAJ – GHOST ENGINE v5 Updater
 
-set -e
+set -euo pipefail
 
 REPO_URL="https://github.com/naborajs/Termux-Tor-IP-Rotator.git"
 REPO_NAME="Termux-Tor-IP-Rotator"
@@ -23,30 +23,24 @@ CURRENT_COMMIT=""
 NEW_COMMIT=""
 
 detect_platform() {
-
     if command -v termux-info >/dev/null 2>&1; then
         PLATFORM="termux"
-
     elif grep -qi microsoft /proc/version 2>/dev/null; then
         PLATFORM="wsl"
-
-    elif [[ "$(uname)" == "Linux" ]]; then
+    elif [[ "$(uname -s)" == "Linux" ]]; then
         PLATFORM="linux"
-
-    elif [[ "$(uname)" == "Darwin" ]]; then
+    elif [[ "$(uname -s)" == "Darwin" ]]; then
         PLATFORM="macos"
-
     else
         PLATFORM="unknown"
     fi
 }
 
 print_header() {
-
     clear
 
     echo -e "${CYAN}${BOLD}╔════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${CYAN}${BOLD}║              NABORAJ – GHOST ENGINE v5 UPDATER              ║${RESET}"
+    echo -e "${CYAN}${BOLD}║              GHOST ENGINE v5 UPDATER              ║${RESET}"
     echo -e "${CYAN}${BOLD}╚════════════════════════════════════════════════════╝${RESET}"
     echo
     echo -e "${CYAN}Platform:${RESET} ${PLATFORM}"
@@ -55,7 +49,6 @@ print_header() {
 }
 
 check_requirements() {
-
     echo -e "${YELLOW}[1/6] Checking requirements...${RESET}"
 
     if ! command -v git >/dev/null 2>&1; then
@@ -73,11 +66,9 @@ check_requirements() {
 }
 
 locate_repo() {
-
     echo -e "${YELLOW}[2/6] Locating Ghost Engine repository...${RESET}"
 
     if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-
         REPO_ROOT="$(git rev-parse --show-toplevel)"
         cd "$REPO_ROOT"
 
@@ -85,7 +76,6 @@ locate_repo() {
         echo -e "    ${CYAN}${REPO_ROOT}${RESET}"
 
     elif [[ -d "$HOME/$REPO_NAME/.git" ]]; then
-
         REPO_ROOT="$HOME/$REPO_NAME"
         cd "$REPO_ROOT"
 
@@ -93,31 +83,28 @@ locate_repo() {
         echo -e "    ${CYAN}${REPO_ROOT}${RESET}"
 
     else
-
         echo -e "${RED}[ERROR] Ghost Engine repository not found.${RESET}"
         echo
         echo -e "${YELLOW}Clone it first with:${RESET}"
         echo -e "git clone ${REPO_URL}"
         exit 1
-
     fi
 
     echo
 }
 
 check_repo_files() {
-
     echo -e "${YELLOW}[3/6] Checking repository files...${RESET}"
 
-    [[ -f "$SCRIPT_NAME" ]] || {
+    if [[ ! -f "$SCRIPT_NAME" ]]; then
         echo -e "${RED}[ERROR] Missing ${SCRIPT_NAME} in repo.${RESET}"
         exit 1
-    }
+    fi
 
-    [[ -f "$INSTALL_SCRIPT" ]] || {
+    if [[ ! -f "$INSTALL_SCRIPT" ]]; then
         echo -e "${RED}[ERROR] Missing ${INSTALL_SCRIPT} in repo.${RESET}"
         exit 1
-    }
+    fi
 
     CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
     CURRENT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
@@ -129,11 +116,9 @@ check_repo_files() {
 }
 
 warn_local_changes() {
-
     echo -e "${YELLOW}[4/6] Checking local changes...${RESET}"
 
     if ! git diff --quiet || ! git diff --cached --quiet; then
-
         echo -e "${MAG}[WARNING] You have local uncommitted changes.${RESET}"
         echo -e "${YELLOW}Updating may cause merge conflicts or overwrite work.${RESET}"
         echo
@@ -143,7 +128,6 @@ warn_local_changes() {
             echo -e "${YELLOW}[CANCELLED] Update aborted by user.${RESET}"
             exit 0
         fi
-
     else
         echo -e "${GREEN}[OK] No local changes detected.${RESET}"
     fi
@@ -152,12 +136,11 @@ warn_local_changes() {
 }
 
 pull_updates() {
-
     echo -e "${YELLOW}[5/6] Pulling latest changes...${RESET}"
 
     git fetch origin
 
-    if git rev-parse --verify origin/"$CURRENT_BRANCH" >/dev/null 2>&1; then
+    if git rev-parse --verify "origin/$CURRENT_BRANCH" >/dev/null 2>&1; then
         git pull --rebase origin "$CURRENT_BRANCH"
     else
         git pull --rebase
@@ -172,11 +155,15 @@ pull_updates() {
 }
 
 reinstall_engine() {
-
     echo -e "${YELLOW}[6/6] Reinstalling Ghost Engine...${RESET}"
     echo
 
     chmod +x "$INSTALL_SCRIPT"
+
+    # Fix Windows CRLF line endings if needed
+    sed -i 's/\r$//' "$INSTALL_SCRIPT" 2>/dev/null || true
+    sed -i 's/\r$//' "$SCRIPT_NAME" 2>/dev/null || true
+
     bash "$INSTALL_SCRIPT"
 
     echo
@@ -185,7 +172,6 @@ reinstall_engine() {
 }
 
 show_summary() {
-
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${GREEN}UPDATE COMPLETE${RESET}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
@@ -203,7 +189,6 @@ show_summary() {
 }
 
 main() {
-
     detect_platform
     print_header
     check_requirements
