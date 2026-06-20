@@ -200,112 +200,132 @@ detect_status() {
 health_check() {
 
     clear
-
     detect_platform
 
     local SCORE=0
-    local MAX_SCORE=6
+    local MAX_SCORE=7
+    local EXIT_IP="UNKNOWN"
+    local INTERNET_OK=false
+    local TOR_OK=false
+    local PROXY_OK=false
+    local WSL_BIND_OK="N/A"
 
     echo -e "${CYAN}╔════════════════════════════════════════════════════╗${RESET}"
     echo -e "${CYAN}║                 HEALTH CHECK                      ║${RESET}"
     echo -e "${CYAN}╚════════════════════════════════════════════════════╝${RESET}"
     echo
 
-    echo -e "${YELLOW}[1/6] Checking Internet...${RESET}"
+    echo -e "${YELLOW}[1/7] Checking Internet...${RESET}"
 
-    if curl -s --max-time 5 https://api64.ipify.org >/dev/null 2>&1; then
+    if curl -s --max-time 5 https://api64.ipify.org >/dev/null 2>&1 || \
+       curl -s --max-time 5 https://ifconfig.me >/dev/null 2>&1; then
 
         echo -e "${GREEN}[PASS] Internet Connection${RESET}"
+        INTERNET_OK=true
         ((SCORE++))
 
     else
-
         echo -e "${RED}[FAIL] Internet Connection${RESET}"
-
     fi
 
     echo
 
-    echo -e "${YELLOW}[2/6] Checking TOR Service...${RESET}"
+
+    echo -e "${YELLOW}[2/7] Checking TOR Service...${RESET}"
 
     if check_tor; then
-
         echo -e "${GREEN}[PASS] TOR Service${RESET}"
+        TOR_OK=true
         ((SCORE++))
-
     else
-
         echo -e "${RED}[FAIL] TOR Service${RESET}"
-
     fi
 
     echo
 
-    echo -e "${YELLOW}[3/6] Checking HTTP Proxy...${RESET}"
+
+    echo -e "${YELLOW}[3/7] Checking HTTP Proxy...${RESET}"
 
     if check_privoxy; then
-
         echo -e "${GREEN}[PASS] Privoxy Service${RESET}"
+        PROXY_OK=true
         ((SCORE++))
-
     else
-
         echo -e "${RED}[FAIL] Privoxy Service${RESET}"
-
     fi
 
     echo
 
-    echo -e "${YELLOW}[4/6] Checking SOCKS5 Port...${RESET}"
+
+    echo -e "${YELLOW}[4/7] Checking SOCKS5 Port...${RESET}"
 
     if nc -z 127.0.0.1 "$TOR_SOCKS_PORT" >/dev/null 2>&1; then
-
         echo -e "${GREEN}[PASS] Port ${TOR_SOCKS_PORT}${RESET}"
         ((SCORE++))
-
     else
-
         echo -e "${RED}[FAIL] Port ${TOR_SOCKS_PORT}${RESET}"
-
     fi
 
     echo
 
-    echo -e "${YELLOW}[5/6] Checking Control Port...${RESET}"
+    echo -e "${YELLOW}[5/7] Checking Control Port...${RESET}"
 
     if nc -z 127.0.0.1 "$TOR_CONTROL_PORT" >/dev/null 2>&1; then
-
         echo -e "${GREEN}[PASS] Port ${TOR_CONTROL_PORT}${RESET}"
         ((SCORE++))
-
     else
-
         echo -e "${RED}[FAIL] Port ${TOR_CONTROL_PORT}${RESET}"
-
     fi
 
     echo
 
-    echo -e "${YELLOW}[6/6] Checking Exit Node...${RESET}"
 
-    local EXIT_IP
+    echo -e "${YELLOW}[6/7] Checking Exit Node...${RESET}"
 
-    EXIT_IP=$(curl \
-        --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
-        --max-time 10 \
-        -s \
-        https://api64.ipify.org)
+    if [[ "$TOR_OK" == true ]]; then
 
-    if [[ -n "$EXIT_IP" ]]; then
+        EXIT_IP=$(curl \
+            --socks5 127.0.0.1:${TOR_SOCKS_PORT} \
+            --max-time 10 \
+            -s \
+            https://api64.ipify.org)
 
-        echo -e "${GREEN}[PASS] Exit IP Found${RESET}"
-        echo -e "Exit IP: ${CYAN}${EXIT_IP}${RESET}"
+        if [[ -n "$EXIT_IP" ]]; then
+            echo -e "${GREEN}[PASS] Exit IP Found${RESET}"
+            echo -e "Exit IP: ${CYAN}${EXIT_IP}${RESET}"
+            ((SCORE++))
+        else
+            echo -e "${RED}[FAIL] Exit Node Check${RESET}"
+        fi
 
-        ((SCORE++))
+    else
+        echo -e "${RED}[SKIP] TOR not running, exit node check skipped${RESET}"
+    fi
+
+    echo
+
+    echo -e "${YELLOW}[7/7] Checking Proxy Binding...${RESET}"
+
+    if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
+
+        if ss -tln 2>/dev/null | grep -q "0.0.0.0:${PRIVOXY_PORT}"; then
+            echo -e "${GREEN}[PASS] WSL Proxy exposed to Windows${RESET}"
+            WSL_BIND_OK="YES"
+            ((SCORE++))
+        else
+            echo -e "${RED}[FAIL] Privoxy is not exposed to Windows${RESET}"
+            echo -e "${DIM}Expected bind: 0.0.0.0:${PRIVOXY_PORT}${RESET}"
+            WSL_BIND_OK="NO"
+        fi
 
     else
 
-        echo -e "${RED}[FAIL] Exit Node Check${RESET}"
+        if [[ "$PROXY_OK" == true ]]; then
+            echo -e "${GREEN}[PASS] Local Proxy Binding OK${RESET}"
+            ((SCORE++))
+        else
+            echo -e "${RED}[FAIL] Local Proxy Binding${RESET}"
+        fi
 
     fi
 
@@ -318,31 +338,28 @@ health_check() {
     printf "%-20s %s\n" "Platform:" "$PLATFORM_NAME"
     printf "%-20s %s\n" "Health Score:" "${HEALTH_SCORE}%"
     printf "%-20s %s\n" "Passed:" "$SCORE/$MAX_SCORE"
-    printf "%-20s %s\n" "Current IP:" "${EXIT_IP:-UNKNOWN}"
+    printf "%-20s %s\n" "Current TOR IP:" "${EXIT_IP:-UNKNOWN}"
+    printf "%-20s %s\n" "Stored Engine IP:" "${CURRENT_IP:-UNKNOWN}"
+    printf "%-20s %s\n" "Log File:" "$LOG_FILE"
+
+    if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
+        printf "%-20s %s\n" "WSL Proxy Bind:" "$WSL_BIND_OK"
+    fi
 
     echo
 
     if (( HEALTH_SCORE == 100 )); then
-
         echo -e "${GREEN}STATUS: EXCELLENT${RESET}"
-
     elif (( HEALTH_SCORE >= 80 )); then
-
         echo -e "${YELLOW}STATUS: GOOD${RESET}"
-
     elif (( HEALTH_SCORE >= 50 )); then
-
         echo -e "${YELLOW}STATUS: DEGRADED${RESET}"
-
     else
-
         echo -e "${RED}STATUS: CRITICAL${RESET}"
-
     fi
 
     echo
     read -p $'Press ENTER to continue... ' _
-
 }
 
 banner() {
