@@ -289,16 +289,6 @@ If the two IPs are different, Ghost Engine is routing through TOR successfully.
 <br>
 
 <p align="center">
-  <img src="assets/UPDATER_PRIVEW.png" alt="Ghost Engine Updater Preview" width="1000">
-</p>
-
-<p align="center">
-  <em>Ghost Engine updater flow — repository update, installer refresh, and latest build deployment.</em>
-</p>
-
-<br>
-
-<p align="center">
   <img src="assets/UNINSTALLER_PRIVEW.png" alt="Ghost Engine Uninstaller Preview" width="1000">
 </p>
 
