@@ -517,8 +517,6 @@ Before installing Ghost Engine on macOS, make sure you have:
 * an active internet connection
 * permission to install packages locally
 
-https://www.google.com/search?q=%3Cimg+width%3D%221536%22+height%3D%221024%22+alt%3D%22GOST+ENGINE+RELESE+BANNE%22+src%3D%22https%3A%2F%2Fgithub.com%2Fuser-attachments%2Fassets%2Fe1718a15-803c-463b-ab7f-49be48b5d0b7%22+%2F%3E&oq=%3Cimg+width%3D%221536%22+height%3D%221024%22+alt%3D%22GOST+ENGINE+RELESE+BANNE%22+src%3D%22https%3A%2F%2Fgithub.com%2Fuser-attachments%2Fassets%2Fe1718a15-803c-463b-ab7f-49be48b5d0b7%22+%2F%3E&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBBzg5NGowajeoAgCwAgA&sourceid=chrome&ie=UTF-8
-
 ---
 
 ## 1) Install Homebrew
