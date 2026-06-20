@@ -1336,6 +1336,7 @@ bash uninstall.sh
     If it helps you, the best support is simple:
     <strong>star the repo, report bugs, suggest improvements, or open a pull request.</strong>
   </p>
+  Please read our <a href="./CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a> before participating in issues, discussions, or pull requests.
 </div>
 
 <br />
