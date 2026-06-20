@@ -170,8 +170,8 @@ cd Termux-Tor-IP-Rotator
 Ghost Engine includes a built-in installer that handles dependency installation and global command setup for Termux.
 
 ```bash id="yn7v9a"
-chmod +x install.sh
-bash install.sh
+chmod +x install.sh #NOT REQURED, but recommended to ensure the script is executable.
+bash install.sh # MAIN COMMAND TO RUN THE INSTALLER.
 ```
 
 The installer will automatically:
@@ -276,7 +276,35 @@ If the two IPs are different, Ghost Engine is routing through TOR successfully.
 * If you are rotating IPs very quickly, expect occasional duplicate exit nodes — that is normal TOR behavior.
 
 ---
+<h2 align="center"> Update & Removal Terminal Preview</h2>
 
+<p align="center">
+  <img src="assets/INSTALLER_PRIVEW.png" alt="Ghost Engine Installer Preview" width="1000">
+</p>
+
+<p align="center">
+  <em>Ghost Engine installer setup flow — platform detection, dependency installation, binary setup, and guided onboarding.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="assets/UPDATER_PRIVEW.png" alt="Ghost Engine Updater Preview" width="1000">
+</p>
+
+<p align="center">
+  <em>Ghost Engine updater flow — repository update, installer refresh, and latest build deployment.</em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="assets/UNINSTALLER_PRIVEW.png" alt="Ghost Engine Uninstaller Preview" width="1000">
+</p>
+
+<p align="center">
+  <em>Ghost Engine uninstaller flow — warning prompts, launcher cleanup, data removal, and full uninstall summary.</em>
+</p>
 ## 10) Updating or Removing Ghost Engine on Termux
 
 ### Update to the latest version
