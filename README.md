@@ -992,50 +992,6 @@ It is the fastest built-in way to confirm whether:
 
 ---
 
-
-## 🔄 Updating & Uninstalling
-
-Keep Ghost Engine up to date to get the latest fixes, platform improvements, and stability updates.
-
-### Update Ghost Engine
-
-Pull the latest changes from the repository and reinstall the newest build:
-
-```bash
-cd ~/Termux-Tor-IP-Rotator
-bash update.sh
-```
-
-### Uninstall Ghost Engine
-
-Remove the installed Ghost Engine binary and optionally clean up its local data, logs, and configuration files:
-
-```bash
-cd ~/Termux-Tor-IP-Rotator
-bash uninstall.sh
-```
-
-### What these scripts do
-
-* **`update.sh`**
-
-  * Pulls the latest version of Ghost Engine from the repository
-  * Re-runs the installer to update your global `ns-ghost` command
-  * Preserves your existing project folder and workflow
-
-* **`uninstall.sh`**
-
-  * Removes the installed `ns-ghost` launcher
-  * Stops Ghost Engine services if they are running
-  * Optionally removes the local Ghost Engine data directory (`~/.ns_ghost`)
-
-> **Tip:** On Linux / WSL, if the `ns-ghost` command doesn’t refresh immediately after updating, open a new terminal session or reload your shell profile.
-
-
----
-
----
-
 <div align="center">
   <h2>❓ Frequently Asked Questions</h2>
   <p>
