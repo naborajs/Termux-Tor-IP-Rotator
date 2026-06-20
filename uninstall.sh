@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NS GAMMING – GHOST ENGINE v5 Uninstaller
+# NABORAJ – GHOST ENGINE v5 Uninstaller
 
 set -e
 
@@ -48,7 +48,7 @@ print_header() {
     clear
 
     echo -e "${CYAN}${BOLD}╔════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${CYAN}${BOLD}║           GHOST ENGINE v5 UNINSTALLER             ║${RESET}"
+    echo -e "${CYAN}${BOLD}║           NABORAJ – GHOST ENGINE v5 UNINSTALLER             ║${RESET}"
     echo -e "${CYAN}${BOLD}╚════════════════════════════════════════════════════╝${RESET}"
     echo
     echo -e "${CYAN}Platform:${RESET} ${PLATFORM}"
