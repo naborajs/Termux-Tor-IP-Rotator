@@ -109,6 +109,21 @@ You are responsible for how you use this tool and for complying with your local 
 
 
 ---
+<div align="center">
+
+  <h2>🧠 How Ghost Engine Works</h2>
+  <p>
+    A visual overview of Ghost Engine’s privacy workflow, TOR routing model, proxy layers,
+    platform support, and core features across Termux, Linux, macOS, and WSL2.
+  </p>
+
+  <img src="assets/GOST_ENGINE.png" alt="Ghost Engine Architecture Banner" width="100%" />
+  <br />
+  <sub><b>Ghost Engine v5 — TOR identity rotation, proxy routing, health checks, and cross-platform privacy workflow</b></sub>
+
+</div>
+
+---
 
 ## 🚀 Quick Start — Android (Termux) *Recommended*
 
