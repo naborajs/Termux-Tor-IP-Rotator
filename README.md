@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
   <br />
 
@@ -1166,38 +1166,6 @@ If Ghost Engine is not working as expected, use the table below to quickly ident
 
 ---
 
-## Quick Recovery Checklist
-
-If Ghost Engine stops working and you want the fastest recovery path, try this:
-
-### 1) Stop Ghost Engine cleanly
-
-```bash id="c7r8vf"
-ns-ghost stop
-```
-
-If the command is unavailable, use the engine's built-in cleanup or restart your terminal.
-
-### 2) Start Ghost Engine again
-
-```bash id="j5f4tw"
-ns-ghost
-```
-
-### 3) Run a quick proxy test
-
-```bash id="ptz7c4"
-curl --proxy http://127.0.0.1:8118 https://api64.ipify.org
-```
-
-### 4) If you are on WSL
-
-* Disable the Windows manual proxy first
-* Restart Ghost Engine
-* Re-enter the **new** proxy host and port shown in Ghost Engine’s startup guide
-
----
-
 ## 🛡 Shell Safety & CRLF Recovery
 
 Ghost Engine runs on Linux, macOS, WSL, and Termux — but shell scripts **must have Unix (LF) line endings**,
@@ -1250,26 +1218,6 @@ You should run `install.sh` again if:
 ```bash id="xkp84r"
 bash install.sh
 ```
-
----
-
-## When to Use Health Check
-
-If you are unsure whether the issue is:
-
-* internet-related
-* TOR-related
-* proxy-related
-* exit-node-related
-
-open Ghost Engine and run **Health Check** from the menu.
-It is the fastest built-in way to confirm whether:
-
-* internet access is working
-* TOR is listening
-* Privoxy is listening
-* the control port is reachable
-* an exit IP can actually be fetched
 
 ---
 
