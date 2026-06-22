@@ -293,6 +293,22 @@ If the two IPs are different, Ghost Engine is routing through TOR successfully.
 
 ---
 
+<div align="center">
+
+  <h3>📱 Android Wi-Fi Proxy Setup</h3>
+  <p>
+    Example of configuring a manual Wi-Fi proxy on Android so supported traffic can be routed
+    through Ghost Engine’s local <code>Privoxy</code> HTTP proxy running inside Termux.
+  </p>
+
+  <img src="assets\ANDROID_WIFI_PROXY_SETUP.jpeg" alt="Android Wi-Fi proxy setup for Ghost Engine" width="360" />
+  <br />
+  <sub><b>Manual Wi-Fi proxy configuration on Android for Ghost Engine</b></sub>
+
+</div>
+
+---
+
 ## 9) Route Android Traffic Through Ghost Engine (Wi-Fi Proxy)
 
 Ghost Engine runs inside Termux, so to route your Android phone or tablet's traffic through it, you need to configure Android's **Wi-Fi proxy settings** to point at the Ghost Engine HTTP proxy.
