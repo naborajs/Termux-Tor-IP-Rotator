@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
   <br />
 
@@ -122,6 +122,34 @@ You are responsible for how you use this tool and for complying with your local 
   <sub><b>Ghost Engine v5 — TOR identity rotation, proxy routing, health checks, and cross-platform privacy workflow</b></sub>
 
 </div>
+
+---
+
+## ⚡ Quick Install (any platform)
+
+```bash
+git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
+cd Termux-Tor-IP-Rotator
+sh bootstrap.sh install
+```
+
+The **bootstrap layer** (`bootstrap.sh`) automatically:
+- Normalizes line endings (CRLF → LF) for all shell scripts
+- Sets executable permissions
+- Dispatches to the platform-specific installer
+
+Other bootstrap commands:
+```bash
+sh bootstrap.sh update      # Pull latest + reinstall
+sh bootstrap.sh uninstall   # Remove Ghost Engine
+```
+
+> **Windows/WSL note:** If you edit shell scripts on Windows, Git may insert CRLF line endings.
+> The bootstrap and all installer scripts now include automatic CRLF self-healing.
+> See the **Shell Safety** section below for details.
+>
+> Full documentation is in the [docs/](docs/) directory — architecture, platform guides, quickstart, and troubleshooting.
+> See also [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [SUPPORT.md](SUPPORT.md).
 
 ---
 
@@ -265,7 +293,70 @@ If the two IPs are different, Ghost Engine is routing through TOR successfully.
 
 ---
 
-## 9) Notes for Android / Termux Users
+<div align="center">
+
+  <h3>📱 Android Wi-Fi Proxy Setup</h3>
+  <p>
+    Example of configuring a manual Wi-Fi proxy on Android so supported traffic can be routed
+    through Ghost Engine’s local <code>Privoxy</code> HTTP proxy running inside Termux.
+  </p>
+
+  <img src="assets/ANDROID_WIFI_PROXY_SETUP.jpeg" alt="Android Wi-Fi proxy setup for Ghost Engine" width="360" />
+  <br />
+  <sub><b>Manual Wi-Fi proxy configuration on Android for Ghost Engine</b></sub>
+
+</div>
+
+---
+
+## 9) Route Android Traffic Through Ghost Engine (Wi-Fi Proxy)
+
+Ghost Engine runs inside Termux, so to route your Android phone or tablet's traffic through it, you need to configure Android's **Wi-Fi proxy settings** to point at the Ghost Engine HTTP proxy.
+
+### Step-by-step Wi-Fi proxy setup
+
+1. Open **Android Settings** → **Wi-Fi**
+2. Long-press your currently connected Wi-Fi network → tap **Modify network** (or **Manage network settings**)
+3. Expand **Advanced options**
+4. Set **Proxy** to **Manual**
+
+Enter the following:
+
+| Field | Value |
+|-------|-------|
+| **Proxy hostname** | `127.0.0.1` |
+| **Proxy port** | `8118` |
+
+> Because Ghost Engine and Android are on the **same device**, `127.0.0.1` (localhost) is the correct address. This is not a remote proxy — it is the Termux environment on your phone.
+
+### What this does
+
+Once the Wi-Fi proxy is enabled, your Android device sends HTTP/HTTPS traffic through:
+
+```
+Android → 127.0.0.1:8118 (Privoxy in Termux) → SOCKS5 (TOR) → Internet
+```
+
+Apps that respect the system Wi-Fi proxy will now route through Ghost Engine.
+Apps that ignore the proxy (some browsers, games, streaming apps) will **still connect directly** — see the notes below.
+
+### Verify on Android
+
+After enabling the proxy, open a browser on your Android device and visit:
+
+- **https://check.torproject.org/** — should say you are using TOR
+- **https://api64.ipify.org/** — should show a TOR exit IP (different from your mobile IP)
+
+### Important Android limitations
+
+- **Not all apps respect the Wi-Fi proxy.** System apps, streaming services, and some games may bypass it entirely. Ghost Engine works best with browser traffic and proxy-aware apps.
+- **If Ghost Engine stops while the proxy is enabled**, Android will still try to route traffic through `127.0.0.1:8118` — but nothing will be listening there, and internet access will break. **Disable the Wi-Fi proxy** before stopping Ghost Engine.
+- **Terminal tools inside Termux** can use the proxy directly via `curl --proxy http://127.0.0.1:8118 ...` or `curl --socks5 127.0.0.1:9050 ...` without needing the Wi-Fi proxy.
+- **Wake lock recommended:** Running `termux-wake-lock` before starting Ghost Engine helps prevent Android from killing Termux in the background.
+
+---
+
+## 10) Notes for Android / Termux Users
 
 * Some Android apps do **not** automatically use the Termux proxy. Ghost Engine works best for:
 
@@ -295,7 +386,7 @@ If the two IPs are different, Ghost Engine is routing through TOR successfully.
 <p align="center">
   <em>Ghost Engine uninstaller flow — warning prompts, launcher cleanup, data removal, and full uninstall summary.</em>
 </p>
-## 10) Updating or Removing Ghost Engine on Termux
+## 11) Updating or Removing Ghost Engine on Termux
 
 ### Update to the latest version
 
@@ -311,7 +402,7 @@ bash uninstall.sh
 
 ---
 
-## 11) If Something Goes Wrong
+## 12) If Something Goes Wrong
 
 If Ghost Engine does not start correctly in Termux:
 
@@ -464,7 +555,38 @@ You can also visit:
 
 ---
 
-## 8) Linux Notes
+## 8) Route Browser & CLI Traffic on Linux
+
+Ghost Engine gives you two proxy endpoints for routing traffic:
+
+| Protocol | Address | Use for |
+|----------|---------|---------|
+| HTTP Proxy (Privoxy) | `127.0.0.1:8118` | Browsers, HTTP clients, system proxy |
+| SOCKS5 (TOR) | `127.0.0.1:9050` | Apps that support SOCKS natively |
+
+### Route terminal tools
+
+```bash
+curl --proxy http://127.0.0.1:8118 https://api64.ipify.org
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+### Route a browser
+
+Configure your browser's manual proxy settings:
+
+| Setting | Value |
+|---------|-------|
+| HTTP Proxy | `127.0.0.1:8118` |
+| SOCKS Host | `127.0.0.1:9050` |
+
+After configuring, visit **https://check.torproject.org/** to confirm.
+
+> **Note:** Browsers route traffic independently of terminal tools. Proxying your browser does **not** automatically proxy your terminal, and vice versa.
+
+---
+
+## 9) Linux Notes
 
 * Ghost Engine is designed to run its **own runtime configuration** instead of depending on your system’s default TOR / Privoxy configuration.
 * If you already use TOR or Privoxy for other tools, be aware that Ghost Engine may need those ports free to work properly.
@@ -472,7 +594,7 @@ You can also visit:
 
 ---
 
-## 9) Updating and Removing Ghost Engine on Linux
+## 10) Updating and Removing Ghost Engine on Linux
 
 ### Update to the latest version
 
@@ -488,7 +610,7 @@ bash uninstall.sh
 
 ---
 
-## 10) If Something Goes Wrong
+## 11) If Something Goes Wrong
 
 If Ghost Engine installs correctly but still does not work:
 
@@ -603,7 +725,45 @@ If the IP shown there is different from your normal internet IP, Ghost Engine is
 
 ---
 
-## 7) Notes for macOS Users
+## 7) Route Browser & CLI Traffic on macOS
+
+Ghost Engine gives you two proxy endpoints for routing traffic:
+
+| Protocol | Address | Use for |
+|----------|---------|---------|
+| HTTP Proxy (Privoxy) | `127.0.0.1:8118` | Browsers, HTTP clients, system proxy |
+| SOCKS5 (TOR) | `127.0.0.1:9050` | Apps that support SOCKS natively |
+
+### Route terminal tools
+
+```bash
+curl --proxy http://127.0.0.1:8118 https://api64.ipify.org
+curl --socks5 127.0.0.1:9050 https://api64.ipify.org
+```
+
+### System-wide proxy (all apps)
+
+1. Open **System Settings → Network → Proxies**
+2. Enable **Web Proxy (HTTP)** and enter `127.0.0.1:8118`
+3. Enable **SOCKS Proxy** and enter `127.0.0.1:9050`
+4. Click **OK**
+
+> **Note:** When the system proxy is enabled, all network-aware apps on your Mac will attempt to route through Ghost Engine. If Ghost Engine is stopped, internet access will break until you disable the proxy.
+
+### Route a browser only
+
+If you prefer to route only your browser, configure the browser's manual proxy settings instead of the system proxy:
+
+| Setting | Value |
+|---------|-------|
+| HTTP Proxy | `127.0.0.1:8118` |
+| SOCKS Host | `127.0.0.1:9050` |
+
+After configuring, visit **https://check.torproject.org/** to confirm TOR routing.
+
+---
+
+## 8) Notes for macOS Users
 
 * Ghost Engine uses its **own runtime configuration** for TOR and Privoxy rather than expecting you to configure them manually.
 * If Homebrew is installed under **Apple Silicon** paths (`/opt/homebrew`), the installer will automatically use that environment.
@@ -611,7 +771,7 @@ If the IP shown there is different from your normal internet IP, Ghost Engine is
 
 ---
 
-## 8) Updating or Removing Ghost Engine on macOS
+## 9) Updating or Removing Ghost Engine on macOS
 
 ### Update to the latest version
 
@@ -629,25 +789,122 @@ bash uninstall.sh
 
 ---
 
-🪟 Windows (WSL2 Only)
+## 🪟 Windows (WSL2 Only)
 
-1. Enable WSL & Ubuntu from Microsoft Store
+Ghost Engine runs inside **WSL2** (Windows Subsystem for Linux) and provides a proxy that Windows apps and browsers can use.
 
+---
 
-2. Open Ubuntu terminal (WSL2)
+## 1) Enable WSL2
 
+If you don't have WSL2 set up yet:
 
+1. Open PowerShell as Administrator and run:
+   ```powershell
+   wsl --install -d Ubuntu
+   ```
+2. Restart your machine when prompted
+3. Launch **Ubuntu** from the Start menu and complete the initial setup (username + password)
 
-Then:
-```
-sudo apt update
-sudo apt install git tor privoxy curl netcat -y
-```
-```
-git clone https://github.com/ns-gamming/Termux-Tor-IP-Rotator
+> WSL2 is recommended. WSL1 may work but has different networking behavior.
+
+---
+
+## 2) Clone the Repository
+
+```bash
+git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
 cd Termux-Tor-IP-Rotator
-chmod +x ns-ghost.sh
-./ns-ghost.sh
+```
+
+---
+
+## 3) Run the Installer
+
+```bash
+sh bootstrap.sh install
+```
+
+The installer will:
+- install TOR, Privoxy, curl, and netcat via `apt`
+- disable the Ubuntu system TOR/Privoxy services (prevents port conflicts)
+- install the `ns-ghost` command into `~/.local/bin`
+- add `~/.local/bin` to your PATH if needed
+
+---
+
+## 4) Start Ghost Engine
+
+```bash
+ns-ghost
+```
+
+If the command is not found, open a new WSL terminal or run `source ~/.bashrc`.
+
+On first launch, Ghost Engine will detect WSL and show the **Windows proxy address** you need in the next step.
+
+---
+
+## 5) Route Windows Traffic Through Ghost Engine
+
+WSL runs in a virtual network, so Windows cannot reach the proxy at `127.0.0.1`. You need the **WSL instance's IP address**.
+
+### Find the WSL proxy address
+
+When Ghost Engine starts in WSL, it displays the correct proxy address at the top of the screen. It looks like:
+
+```
+🌐 Windows proxy address: 172.x.x.x:8118
+```
+
+You can also find it manually:
+
+```bash
+hostname -I | awk '{print $1}'
+```
+
+### Configure Windows to use the proxy
+
+1. Open **Windows Settings → Network & Internet → Proxy**
+2. Enable **Use a proxy server**
+3. Enter the WSL IP address as the **Address** and `8118` as the **Port**
+4. Click **Save**
+
+> ⚠ Do **not** use `127.0.0.1` for the Windows proxy — that points to Windows itself, not WSL. Use the IP shown by Ghost Engine.
+
+### Verify on Windows
+
+Open a browser in Windows and visit:
+
+- **https://check.torproject.org/** — should confirm you are using TOR
+- **https://api64.ipify.org/** — should show a TOR exit IP (different from your real IP)
+
+---
+
+## 6) WSL-Specific Gotchas
+
+- **Proxy host changes between WSL restarts.** Every time Windows restarts, WSL may get a new IP. Ghost Engine shows the correct address on startup.
+- **If Windows internet breaks** after enabling the proxy, Ghost Engine may have stopped or the IP changed. Disable the Windows proxy, restart Ghost Engine in WSL, and re-enter the new address shown.
+- **Windows apps and browsers** must be configured to use the proxy individually if you don't enable the system-wide proxy. Most browsers let you set a manual proxy in their network settings.
+- **System TOR/Privoxy services** in Ubuntu are disabled by the installer to avoid port conflicts. If you use them for other purposes, re-enable them after stopping Ghost Engine.
+- **WSL1 vs WSL2:** WSL1 does not have a separate network interface — in that case `127.0.0.1` does work. But WSL2 is the default and recommended version.
+
+---
+
+## 7) Update or Remove
+
+### Update
+
+```bash
+cd Termux-Tor-IP-Rotator
+sh bootstrap.sh update
+```
+
+### Uninstall
+
+```bash
+cd Termux-Tor-IP-Rotator
+sh bootstrap.sh uninstall
 ```
 
 ---
@@ -665,7 +922,7 @@ Paste this inside:
 #!/usr/bin/env bash
 set -e
 
-echo "[*] Ghost Engine v4 — Auto Installer (Debian/Ubuntu)"
+echo "[*] Ghost Engine v5 — Auto Installer (Debian/Ubuntu)"
 echo
 
 # Check for sudo
@@ -688,7 +945,7 @@ sudo apt install -y git tor privoxy curl netcat || {
 # Clone repo if needed
 if [ ! -d "$HOME/Termux-Tor-IP-Rotator" ]; then
   echo "[*] Cloning repository..."
-  git clone https://github.com/ns-gamming/Termux-Tor-IP-Rotator "$HOME/Termux-Tor-IP-Rotator"
+  git clone https://github.com/naborajs/Termux-Tor-IP-Rotator "$HOME/Termux-Tor-IP-Rotator"
 else
   echo "[*] Repo already exists. Pulling latest changes..."
   cd "$HOME/Termux-Tor-IP-Rotator"
@@ -925,34 +1182,42 @@ If Ghost Engine is not working as expected, use the table below to quickly ident
 
 ---
 
-## Quick Recovery Checklist
+## 🛡 Shell Safety & CRLF Recovery
 
-If Ghost Engine stops working and you want the fastest recovery path, try this:
+Ghost Engine runs on Linux, macOS, WSL, and Termux — but shell scripts **must have Unix (LF) line endings**,
+not Windows (CRLF) line endings. Editing files on Windows and then running them on WSL/Linux can cause:
 
-### 1) Stop any old TOR / Privoxy processes
-
-```bash id="c7r8vf"
-pkill tor 2>/dev/null
-pkill privoxy 2>/dev/null
+```
+$'\r': command not found
+invalid option name: pipefail
+syntax error near unexpected token '{\r'
 ```
 
-### 2) Start Ghost Engine again
+### How Ghost Engine prevents this
 
-```bash id="j5f4tw"
-ns-ghost
+| Layer | Mechanism |
+|-------|-----------|
+| **`.gitattributes`** | Forces LF line endings for all `.sh` files in the repository |
+| **`.editorconfig`** | Guides editors to save shell files with LF |
+| **`bootstrap.sh`** | Strips CR from all shell scripts before dispatching commands |
+| **Self-heal in each script** | Every `.sh` file detects CRLF at startup and re-execs after cleaning |
+| **Installer CRLF fix** | `install.sh` and `update.sh` clean CRLF before running further commands |
+
+### If you hit CRLF errors anyway
+
+```bash
+# Option 1 — use the bootstrap (recommended)
+cd Termux-Tor-IP-Rotator
+sh bootstrap.sh install
+
+# Option 2 — manual fix for all shell scripts
+find . -name '*.sh' -exec sh -c 'tr -d "\r" < "$1" > "$1.tmp" && mv "$1.tmp" "$1"' _ {} \;
+
+# Option 3 — dos2unix (if installed)
+find . -name '*.sh' -exec dos2unix {} +
 ```
 
-### 3) Run a quick proxy test
-
-```bash id="ptz7c4"
-curl --proxy http://127.0.0.1:8118 https://api64.ipify.org
-```
-
-### 4) If you are on WSL
-
-* Disable the Windows manual proxy first
-* Restart Ghost Engine
-* Re-enter the **new** proxy host and port shown in Ghost Engine’s startup guide
+After fixing, run `sh bootstrap.sh install` again.
 
 ---
 
@@ -969,26 +1234,6 @@ You should run `install.sh` again if:
 ```bash id="xkp84r"
 bash install.sh
 ```
-
----
-
-## When to Use Health Check
-
-If you are unsure whether the issue is:
-
-* internet-related
-* TOR-related
-* proxy-related
-* exit-node-related
-
-open Ghost Engine and run **Health Check** from the menu.
-It is the fastest built-in way to confirm whether:
-
-* internet access is working
-* TOR is listening
-* Privoxy is listening
-* the control port is reachable
-* an exit IP can actually be fetched
 
 ---
 

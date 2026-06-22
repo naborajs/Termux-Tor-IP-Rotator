@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # NABORAJ – GHOST ENGINE v5 Updater
 
+# Self-heal CRLF (portable): re-exec after stripping \r
+if grep -q $'\r' "$0" 2>/dev/null; then
+    tr -d '\r' < "$0" > "$0.tmp" 2>/dev/null || exit 1
+    mv "$0.tmp" "$0" 2>/dev/null || exit 1
+    exec bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 REPO_URL="https://github.com/naborajs/Termux-Tor-IP-Rotator.git"
@@ -158,13 +165,14 @@ reinstall_engine() {
     echo -e "${YELLOW}[6/6] Reinstalling Ghost Engine...${RESET}"
     echo
 
+    # Fix CRLF line endings before running (portable tr approach)
+    for _crlf_fix in "$INSTALL_SCRIPT" "$SCRIPT_NAME"; do
+        if [ -f "$_crlf_fix" ]; then
+            tr -d '\r' < "$_crlf_fix" > "$_crlf_fix.tmp" 2>/dev/null && mv "$_crlf_fix.tmp" "$_crlf_fix" 2>/dev/null || rm -f "$_crlf_fix.tmp"
+        fi
+    done
+
     chmod +x "$INSTALL_SCRIPT"
-
-    # Fix Windows CRLF line endings if needed
-    sed -i 's/\r$//' "$INSTALL_SCRIPT" 2>/dev/null || true
-    sed -i 's/\r$//' "$SCRIPT_NAME" 2>/dev/null || true
-
-    bash "$INSTALL_SCRIPT"
 
     echo
     echo -e "${GREEN}[OK] Installer completed.${RESET}"

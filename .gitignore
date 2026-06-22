@@ -1,0 +1,19 @@
+# Ghost Engine — version control ignores
+
+# Editor / OS droppings
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Ghost Engine runtime (user-local, not repo)
+.ns_ghost/
+
+# Temp files from torify URL tool
+/tmp/ghost_response_*
+
+# Backup files from sed -i
+*.bak

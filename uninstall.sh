@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # NABORAJ – GHOST ENGINE v5 Uninstaller
 
+# Self-heal CRLF (portable): re-exec after stripping \r
+if grep -q $'\r' "$0" 2>/dev/null; then
+    tr -d '\r' < "$0" > "$0.tmp" 2>/dev/null || exit 1
+    mv "$0.tmp" "$0" 2>/dev/null || exit 1
+    exec bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 INSTALL_NAME="ns-ghost"

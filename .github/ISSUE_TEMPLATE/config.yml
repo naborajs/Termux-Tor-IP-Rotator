@@ -1,0 +1,13 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ❓ Questions & Help
+    url: https://github.com/naborajs/Termux-Tor-IP-Rotator/issues
+    about: |
+      Use GitHub Issues for questions too — just use a clear title.
+      Before opening, check the Troubleshooting Guide and FAQ in the README.
+  - name: 📖 Troubleshooting Guide
+    url: https://github.com/naborajs/Termux-Tor-IP-Rotator/blob/main/docs/TROUBLESHOOTING.md
+    about: Known issues, fixes, and recovery steps.
+  - name: 🐞 Existing Issues
+    url: https://github.com/naborajs/Termux-Tor-IP-Rotator/issues
+    about: Search before opening — your problem may already be reported.
