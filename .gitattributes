@@ -1,0 +1,31 @@
+# Auto-detect text vs binary for all files
+* text=auto
+
+# Shell scripts: force LF line endings (must be Unix-compatible)
+*.sh text eol=lf
+
+# Documentation / config: LF for consistency
+*.md text eol=lf
+*.txt text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+*.rc text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Windows-specific files: keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets: mark explicitly
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.gif binary
+
+# Licence and code of conduct (text)
+LICENSE text eol=lf
+CODE_OF_CONDUCT.md text eol=lf

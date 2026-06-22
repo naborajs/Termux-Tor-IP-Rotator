@@ -2,13 +2,16 @@
 # 👻 GHOST ENGINE v5
 # NS GAMING • Advanced TOR Identity Framework
 # ==========================================================
-PREFIX="${PREFIX:-/usr}"
 
 BASE_DIR="$HOME/.ns_ghost"
 TOR_DIR="$BASE_DIR/tor_single"
 
 PRIVOXY_CONF="$BASE_DIR/privoxy.conf"
 LOG_FILE="$BASE_DIR/tor_debug.log"
+CONFIG_FILE="$BASE_DIR/config.conf"
+
+TOR_PID_FILE="$BASE_DIR/tor.pid"
+PRIVOXY_PID_FILE="$BASE_DIR/privoxy.pid"
 
 TOR_SOCKS_PORT=9050
 TOR_CONTROL_PORT=9051
@@ -56,6 +59,7 @@ HEALTH_SCORE=0
 
 SHOW_MATRIX=true
 SHOW_COLORS=true
+AUTO_SAVE_LOGS=false
 
 ENGINE_NAME="Ghost Engine"
 ENGINE_VERSION="v5"
@@ -67,8 +71,6 @@ DEPENDENCIES_OK="$BASE_DIR/.deps_installed"
 
 DOCS_OS="Unknown"
 DOCS_RECOMMEND="Quick Start"
-
-HEALTH_SCORE=0
 
 AUTO_ROTATE_RUNNING=false
 
@@ -83,6 +85,98 @@ MAG="\e[38;5;213m"
 DIM="\e[2m"
 BOLD="\e[1m"
 RESET="\e[0m"
+
+load_config() {
+
+    [[ -f "$CONFIG_FILE" ]] || return 0
+
+    local key val
+    while IFS='=' read -r key val; do
+
+        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+
+        key="${key%%#*}"
+        key="$(echo "$key" | sed 's/[[:space:]]*$//; s/^[[:space:]]*//')"
+        val="$(echo "$val" | sed 's/[[:space:]]*$//; s/^[[:space:]]*//')"
+
+        case "$key" in
+            MAX_DUPLICATES)
+                [[ "$val" =~ ^[0-9]+$ ]] && (( val >= 1 )) && MAX_DUPLICATES="$val"
+                ;;
+            SHOW_MATRIX)
+                [[ "$val" == "true" || "$val" == "false" ]] && SHOW_MATRIX="$val"
+                ;;
+            AUTO_SAVE_LOGS)
+                [[ "$val" == "true" || "$val" == "false" ]] && AUTO_SAVE_LOGS="$val"
+                ;;
+            TOR_SOCKS_PORT)
+                [[ "$val" =~ ^[0-9]+$ ]] && TOR_SOCKS_PORT="$val"
+                ;;
+            TOR_CONTROL_PORT)
+                [[ "$val" =~ ^[0-9]+$ ]] && TOR_CONTROL_PORT="$val"
+                ;;
+            PRIVOXY_PORT)
+                [[ "$val" =~ ^[0-9]+$ ]] && PRIVOXY_PORT="$val"
+                ;;
+        esac
+
+    done < "$CONFIG_FILE"
+}
+
+save_config() {
+
+    mkdir -p "$BASE_DIR"
+
+    cat > "$CONFIG_FILE" <<EOF
+# Ghost Engine persistent configuration
+# Edited: $(date '+%Y-%m-%d %H:%M:%S')
+
+MAX_DUPLICATES=$MAX_DUPLICATES
+SHOW_MATRIX=$SHOW_MATRIX
+AUTO_SAVE_LOGS=$AUTO_SAVE_LOGS
+TOR_SOCKS_PORT=$TOR_SOCKS_PORT
+TOR_CONTROL_PORT=$TOR_CONTROL_PORT
+PRIVOXY_PORT=$PRIVOXY_PORT
+EOF
+}
+
+kill_pid_file() {
+
+    local pidfile="$1"
+
+    [[ -f "$pidfile" ]] || return 0
+
+    local pid
+    pid=$(cat "$pidfile" 2>/dev/null)
+
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null
+        sleep 1
+        kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
+    fi
+
+    rm -f "$pidfile"
+}
+
+stop_ghost_tor() {
+    kill_pid_file "$TOR_PID_FILE"
+    pkill -f "tor.*${TOR_DIR}" 2>/dev/null || true
+}
+
+stop_ghost_privoxy() {
+    kill_pid_file "$PRIVOXY_PID_FILE"
+    pkill -f "privoxy.*${PRIVOXY_CONF}" 2>/dev/null || true
+}
+
+cleanup_on_exit() {
+
+    stop_ghost_tor
+    stop_ghost_privoxy
+
+    [[ -f "$BASE_DIR/runtime.lock" ]] && rm -f "$BASE_DIR/runtime.lock"
+
+    return 0
+}
 
 detect_platform() {
 
@@ -422,7 +516,7 @@ EOF
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${CYAN}💡 Quick Tip:${RESET}"
 
-    if grep -qi microsoft /proc/version 2>/dev/null; then
+    if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
         echo -e "${GREEN}[INFO] WSL Environment Detected${RESET}"
         echo
         echo -e "Windows Proxy Setup:"
@@ -474,18 +568,7 @@ security_hardening() {
         termux-wake-lock >/dev/null 2>&1
     fi
 
-    if grep -qi microsoft /proc/version 2>/dev/null; then
-        PLATFORM_NAME="WSL"
-
-    elif command -v termux-info >/dev/null 2>&1; then
-        PLATFORM_NAME="Termux"
-
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        PLATFORM_NAME="macOS"
-
-    else
-        PLATFORM_NAME="Linux"
-    fi
+    detect_platform
 
     echo "========================================" >> "$LOG_FILE"
     echo "Ghost Engine Startup" >> "$LOG_FILE"
@@ -734,8 +817,8 @@ check_duplicate_ip() {
     ((RESTART_COUNT++))
     LAST_RESTART_TIME=$(date '+%H:%M:%S')
 
-    pkill tor 2>/dev/null
-    pkill privoxy 2>/dev/null
+    stop_ghost_tor
+    stop_ghost_privoxy
 
     sleep 3
 
@@ -873,8 +956,8 @@ start_tor_engine() {
         echo -e "${YELLOW}[1/5] Cleaning Previous Session...${RESET}"
     fi
 
-    pkill tor 2>/dev/null
-    pkill privoxy 2>/dev/null
+    stop_ghost_tor
+    stop_ghost_privoxy
 
     sleep 2
 
@@ -899,6 +982,7 @@ EOF
     echo "$(date '+%Y-%m-%d %H:%M:%S') | Starting TOR" >> "$LOG_FILE"
 
     tor -f "$TORRC" >> "$LOG_FILE" 2>&1 &
+    echo $! > "$TOR_PID_FILE"
 
     local TOR_READY=false
 
@@ -950,6 +1034,7 @@ EOF
     echo "$(date '+%Y-%m-%d %H:%M:%S') | Starting Privoxy" >> "$LOG_FILE"
 
     privoxy "$PRIVOXY_CONF" >> "$LOG_FILE" 2>&1 &
+    echo $! > "$PRIVOXY_PID_FILE"
 
     local PROXY_READY=false
 
@@ -996,7 +1081,7 @@ EOF
 
     LAST_START_TIME=$(date '+%H:%M:%S')
 
-    if grep -qi microsoft /proc/version 2>/dev/null; then
+    if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
 
         PROXY_HOST=$(hostname -I 2>/dev/null | awk '{print $1}')
 
@@ -1144,8 +1229,8 @@ echo
 
 echo -e "${YELLOW}[1/4] Stopping TOR Service...${RESET}"
 
-if pgrep tor >/dev/null; then
-    pkill tor 2>/dev/null
+if pgrep tor >/dev/null || [[ -f "$TOR_PID_FILE" ]]; then
+    stop_ghost_tor
     sleep 1
 
     if pgrep tor >/dev/null; then
@@ -1160,8 +1245,8 @@ fi
 echo
 echo -e "${YELLOW}[2/4] Stopping Proxy Service...${RESET}"
 
-if pgrep privoxy >/dev/null; then
-    pkill privoxy 2>/dev/null
+if pgrep privoxy >/dev/null || [[ -f "$PRIVOXY_PID_FILE" ]]; then
+    stop_ghost_privoxy
     sleep 1
 
     if pgrep privoxy >/dev/null; then
@@ -1191,7 +1276,7 @@ fi
 echo
 echo -e "${CYAN}Platform:${RESET} $PLATFORM_NAME"
 
-if grep -qi microsoft /proc/version 2>/dev/null; then
+if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
 
     echo
     echo -e "${YELLOW}WSL NOTICE${RESET}"
@@ -1302,7 +1387,7 @@ fi
 
 echo
 
-if grep -qi microsoft /proc/version 2>/dev/null; then
+if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
 
     echo -e "${YELLOW}WSL INFORMATION${RESET}"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -1481,7 +1566,26 @@ read -p "Rotation Interval (seconds, min 3): " T
 [[ ! "$T" =~ ^[0-9]+$ ]] && T=10
 (( T < 3 )) && T=3
 
+local STOP_ROTATION=false
+trap 'STOP_ROTATION=true' INT
+
 while true; do
+
+    if [[ "$STOP_ROTATION" == true ]]; then
+
+        echo
+        echo -e "${YELLOW}[STOPPED] Auto-rotation paused by user.${RESET}"
+        echo
+        read -p "Stop Tor/Privoxy too? (y/N): " stop_engine
+
+        if [[ "$stop_engine" == "y" || "$stop_engine" == "Y" ]]; then
+            echo
+            stop_all
+        fi
+
+        trap - INT
+        return
+    fi
 
     if ! check_tor || ! check_privoxy; then
 
@@ -1678,11 +1782,14 @@ echo
 echo -e "${YELLOW}[+] Fetching URL through TOR...${RESET}"
 echo
 
+local RESPONSE_FILE
+RESPONSE_FILE=$(mktemp "/tmp/ghost_response_XXXXXX")
+
 HTTP_CODE=$(curl \
     --proxy "http://127.0.0.1:${PRIVOXY_PORT}" \
     --max-time 20 \
     -s \
-    -o /tmp/ghost_response.txt \
+    -o "$RESPONSE_FILE" \
     -w "%{http_code}" \
     "$URL")
 
@@ -1712,12 +1819,12 @@ echo -e "${GREEN}Response Preview${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo
 
-head -n 30 /tmp/ghost_response.txt
+head -n 30 "$RESPONSE_FILE"
 
 echo
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-rm -f /tmp/ghost_response.txt
+rm -f "$RESPONSE_FILE"
 
 echo
 read -p $'Press ENTER to continue... ' _
@@ -1929,19 +2036,27 @@ show_doc() {
 
 detect_docs_environment() {
 
-    if grep -qi microsoft /proc/version 2>/dev/null; then
-        DOCS_OS="WSL"
-        DOCS_RECOMMEND="WSL Guide"
+    detect_platform
 
-    elif command -v termux-info >/dev/null 2>&1; then
-        DOCS_OS="Termux"
-        DOCS_RECOMMEND="Termux Guide"
+    case "$PLATFORM_TYPE" in
+        WSL)
+            DOCS_OS="WSL"
+            DOCS_RECOMMEND="WSL Guide"
+            ;;
+        TERMUX)
+            DOCS_OS="Termux"
+            DOCS_RECOMMEND="Termux Guide"
+            ;;
+        MACOS)
+            DOCS_OS="macOS"
+            DOCS_RECOMMEND="Linux Guide"
+            ;;
+        *)
+            DOCS_OS="Linux"
+            DOCS_RECOMMEND="Linux Guide"
+            ;;
+    esac
 
-    else
-        DOCS_OS="Linux"
-        DOCS_RECOMMEND="Linux Guide"
-    fi
-    
     LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 
     TOR_RUNNING="OFFLINE"
@@ -2099,8 +2214,10 @@ settings_menu() {
 
                     MAX_DUPLICATES="$new_limit"
 
+                    save_config
+
                     echo
-                    echo -e "${GREEN}[SUCCESS] Duplicate threshold updated.${RESET}"
+                    echo -e "${GREEN}[SUCCESS] Duplicate threshold updated & saved.${RESET}"
 
                 else
 
@@ -2140,8 +2257,10 @@ settings_menu() {
                     SHOW_MATRIX=true
                 fi
 
+                save_config
+
                 echo
-                echo -e "${GREEN}[SUCCESS] Matrix setting updated.${RESET}"
+                echo -e "${GREEN}[SUCCESS] Matrix setting updated & saved.${RESET}"
 
                 sleep 1
                 ;;
@@ -2154,8 +2273,10 @@ settings_menu() {
                     AUTO_SAVE_LOGS=true
                 fi
 
+                save_config
+
                 echo
-                echo -e "${GREEN}[SUCCESS] Log setting updated.${RESET}"
+                echo -e "${GREEN}[SUCCESS] Log setting updated & saved.${RESET}"
 
                 sleep 1
                 ;;
@@ -2288,9 +2409,6 @@ main_menu() {
 
     while true; do
 
-        detect_platform
-        detect_status
-
         clear
 
         banner
@@ -2415,6 +2533,107 @@ main_menu() {
     done
 }
 
+load_config
 security_hardening
 install_deps
-main_menu
+
+trap cleanup_on_exit EXIT INT TERM
+
+main() {
+
+    case "${1:-}" in
+
+        start)
+
+        if check_tor && check_privoxy; then
+
+            echo -e "${YELLOW}Ghost Engine is already running.${RESET}"
+            exit 0
+        fi
+
+        start_tor_engine true
+
+        if check_tor && check_privoxy; then
+
+            echo -e "${GREEN}Ghost Engine started successfully.${RESET}"
+            echo "SOCKS5: 127.0.0.1:${TOR_SOCKS_PORT}"
+            echo "HTTP:   ${PROXY_HOST}:${PRIVOXY_PORT}"
+
+        else
+
+            echo -e "${RED}Failed to start Ghost Engine.${RESET}" >&2
+            exit 1
+
+        fi
+        ;;
+
+        stop)
+
+        echo -e "${YELLOW}Stopping Ghost Engine...${RESET}"
+
+        stop_ghost_tor
+        stop_ghost_privoxy
+
+        if ! pgrep tor >/dev/null && ! pgrep privoxy >/dev/null; then
+            echo -e "${GREEN}Ghost Engine stopped.${RESET}"
+        else
+            echo -e "${YELLOW}Some processes could not be stopped.${RESET}" >&2
+        fi
+        ;;
+
+        rotate)
+            single_rotate
+            ;;
+
+        status)
+
+            detect_platform
+            detect_status
+
+            echo -e "${CYAN}╔════════════════════════════════════╗${RESET}"
+            echo -e "${CYAN}║       GHOST ENGINE STATUS         ║${RESET}"
+            echo -e "${CYAN}╚════════════════════════════════════╝${RESET}"
+            echo
+            printf "%-16s %s\n" "TOR:"     "$TOR_RUNNING"
+            printf "%-16s %s\n" "Proxy:"   "$PROXY_RUNNING"
+            printf "%-16s %s\n" "IP:"      "$CURRENT_IP"
+            printf "%-16s %s\n" "Platform" "$PLATFORM_NAME"
+            printf "%-16s %s\n" "Rotations:" "$TOTAL_ROTATIONS"
+            printf "%-16s %s\n" "Uptime:"  "$UPTIME_STRING"
+            echo
+            ;;
+
+        ip|checkip)
+            check_ip
+            ;;
+
+        health|doctor)
+            health_check
+            ;;
+
+        menu|"")
+            main_menu
+            ;;
+
+        *)
+
+            echo -e "${GREEN}Ghost Engine v5 — TOR Privacy Toolkit${RESET}"
+            echo
+            echo "Usage: ns-ghost [command]"
+            echo
+            echo "Commands:"
+            echo "  (no args)     Interactive menu (default)"
+            echo "  start         Start Tor + Privoxy engine"
+            echo "  stop          Stop engine"
+            echo "  rotate        Rotate TOR identity once"
+            echo "  status        Show current engine status"
+            echo "  ip            Check TOR IP"
+            echo "  health        Run health diagnostics"
+            echo "  menu          Interactive menu"
+            exit 1
+            ;;
+
+    esac
+}
+
+main "$@"

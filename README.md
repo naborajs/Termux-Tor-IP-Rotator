@@ -125,6 +125,31 @@ You are responsible for how you use this tool and for complying with your local 
 
 ---
 
+## ⚡ Quick Install (any platform)
+
+```bash
+git clone https://github.com/naborajs/Termux-Tor-IP-Rotator.git
+cd Termux-Tor-IP-Rotator
+sh bootstrap.sh install
+```
+
+The **bootstrap layer** (`bootstrap.sh`) automatically:
+- Normalizes line endings (CRLF → LF) for all shell scripts
+- Sets executable permissions
+- Dispatches to the platform-specific installer
+
+Other bootstrap commands:
+```bash
+sh bootstrap.sh update      # Pull latest + reinstall
+sh bootstrap.sh uninstall   # Remove Ghost Engine
+```
+
+> **Windows/WSL note:** If you edit shell scripts on Windows, Git may insert CRLF line endings.
+> The bootstrap and all installer scripts now include automatic CRLF self-healing.
+> See the **Shell Safety** section below for details.
+
+---
+
 ## 🚀 Quick Start — Android (Termux) *Recommended*
 
 Ghost Engine works very well on **Android through Termux** and this is one of the easiest ways to use it on mobile.
@@ -953,6 +978,45 @@ curl --proxy http://127.0.0.1:8118 https://api64.ipify.org
 * Disable the Windows manual proxy first
 * Restart Ghost Engine
 * Re-enter the **new** proxy host and port shown in Ghost Engine’s startup guide
+
+---
+
+## 🛡 Shell Safety & CRLF Recovery
+
+Ghost Engine runs on Linux, macOS, WSL, and Termux — but shell scripts **must have Unix (LF) line endings**,
+not Windows (CRLF) line endings. Editing files on Windows and then running them on WSL/Linux can cause:
+
+```
+$'\r': command not found
+invalid option name: pipefail
+syntax error near unexpected token '{\r'
+```
+
+### How Ghost Engine prevents this
+
+| Layer | Mechanism |
+|-------|-----------|
+| **`.gitattributes`** | Forces LF line endings for all `.sh` files in the repository |
+| **`.editorconfig`** | Guides editors to save shell files with LF |
+| **`bootstrap.sh`** | Strips CR from all shell scripts before dispatching commands |
+| **Self-heal in each script** | Every `.sh` file detects CRLF at startup and re-execs after cleaning |
+| **Installer CRLF fix** | `install.sh` and `update.sh` clean CRLF before running further commands |
+
+### If you hit CRLF errors anyway
+
+```bash
+# Option 1 — use the bootstrap (recommended)
+cd Termux-Tor-IP-Rotator
+sh bootstrap.sh install
+
+# Option 2 — manual fix for all shell scripts
+find . -name '*.sh' -exec sh -c 'tr -d "\r" < "$1" > "$1.tmp" && mv "$1.tmp" "$1"' _ {} \;
+
+# Option 3 — dos2unix (if installed)
+find . -name '*.sh' -exec dos2unix {} +
+```
+
+After fixing, run `sh bootstrap.sh install` again.
 
 ---
 

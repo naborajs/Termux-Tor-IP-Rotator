@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # NS GAMMING – GHOST ENGINE v5 Installer
 
+# Self-heal CRLF (portable): re-exec after stripping \r
+if grep -q $'\r' "$0" 2>/dev/null; then
+    tr -d '\r' < "$0" > "$0.tmp" 2>/dev/null || exit 1
+    mv "$0.tmp" "$0" 2>/dev/null || exit 1
+    exec bash "$0" "$@"
+fi
+
 set -e
 
 INSTALL_NAME="ns-ghost"
@@ -120,7 +127,7 @@ prepare_shell_scripts() {
 
         if [[ -f "$script" ]]; then
 
-            sed -i 's/\r$//' "$script" 2>/dev/null || true
+            tr -d '\r' < "$script" > "$script.tmp" 2>/dev/null && mv "$script.tmp" "$script" 2>/dev/null || rm -f "$script.tmp"
 
             if chmod +x "$script" 2>/dev/null; then
                 echo -e "${GREEN}[OK]${RESET} Prepared ${script}"
