@@ -1274,16 +1274,8 @@ else
 fi
 
 echo
-echo -e "${CYAN}Platform:${RESET} $PLATFORM_NAME"
 
-if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
-
-    echo
-    echo -e "${YELLOW}WSL NOTICE${RESET}"
-    echo -e "If Windows Proxy is enabled,"
-    echo -e "disable it now to restore direct connectivity."
-
-fi
+show_shutdown_warning
 
 echo
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
@@ -1296,6 +1288,62 @@ $(( ( $(date +%s ) - SESSION_START ) % 60 )))${RESET}"
 
 echo
 read -p $'Press ENTER to continue... ' _
+
+}
+
+show_shutdown_warning() {
+
+    detect_platform
+
+    echo -e "${YELLOW}╔════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${YELLOW}║         ⚠  PROXY SHUTDOWN REMINDER               ║${RESET}"
+    echo -e "${YELLOW}╚════════════════════════════════════════════════════╝${RESET}"
+    echo
+
+    if [[ "$PLATFORM_TYPE" == "WSL" ]]; then
+
+        echo -e "Ghost Engine ran inside WSL and its proxy has been stopped."
+        echo -e "If you enabled the Windows manual proxy to route traffic"
+        echo -e "through Ghost Engine, your browser and apps may now have"
+        echo -e "no internet access."
+        echo
+        echo -e "${BOLD}To restore connectivity:${RESET}"
+        echo -e "  Open ${CYAN}Windows Settings → Network & Internet → Proxy${RESET}"
+        echo -e "  Turn ${BOLD}OFF${RESET} ${YELLOW}Use a proxy server${RESET}"
+        echo
+        echo -e "  Windows proxy address used this session: ${CYAN}${PROXY_HOST}:${PRIVOXY_PORT}${RESET}"
+        echo
+
+    elif [[ "$PLATFORM_TYPE" == "TERMUX" ]]; then
+
+        echo -e "Ghost Engine has stopped its proxy services inside Termux."
+        echo -e "If you enabled the Android Wi-Fi manual proxy to route"
+        echo -e "traffic through Ghost Engine, your browser and apps may"
+        echo -e "now have no internet access."
+        echo
+        echo -e "${BOLD}To restore connectivity:${RESET}"
+        echo -e "  Open ${CYAN}Android Settings → Wi-Fi${RESET}"
+        echo -e "  Tap your network → ${CYAN}Modify network${RESET} → ${CYAN}Advanced options${RESET}"
+        echo -e "  Set ${CYAN}Proxy${RESET} to ${YELLOW}None${RESET}"
+        echo
+
+    else
+
+        echo -e "Ghost Engine has stopped its proxy services."
+        echo -e "If you configured a browser, app, or system proxy to"
+        echo -e "route through Ghost Engine, those connections will now fail."
+        echo
+        echo -e "${BOLD}Quick checks:${RESET}"
+        echo -e "  ${CYAN}HTTP Proxy${RESET}  ${PROXY_HOST}:${PRIVOXY_PORT}  ${DIM}(no longer active)${RESET}"
+        echo -e "  ${CYAN}SOCKS5${RESET}     ${PROXY_HOST}:${TOR_SOCKS_PORT}  ${DIM}(no longer active)${RESET}"
+        echo -e "  Disable manual proxy in your browser, app, or system settings."
+        echo
+
+    fi
+
+    echo -e "${DIM}Ghost Engine only controls its own proxy stack —"
+    echo -e "it cannot automatically disable OS or browser proxy settings.${RESET}"
+    echo
 
 }
 
@@ -2576,6 +2624,8 @@ main() {
 
         if ! pgrep tor >/dev/null && ! pgrep privoxy >/dev/null; then
             echo -e "${GREEN}Ghost Engine stopped.${RESET}"
+            echo
+            show_shutdown_warning
         else
             echo -e "${YELLOW}Some processes could not be stopped.${RESET}" >&2
         fi
