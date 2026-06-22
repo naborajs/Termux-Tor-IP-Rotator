@@ -1,0 +1,69 @@
+name: 💡 Feature Request
+description: Suggest an idea or improvement for Ghost Engine
+labels: [enhancement]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for thinking about how Ghost Engine could be better.
+        Please explain **what problem you're solving**, not just what you want added.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: A clear description of the pain point or missing capability.
+      placeholder: |
+        When using auto-rotation, I can't change the interval without restarting the loop.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you imagine this working?
+      placeholder: |
+        Add a hotkey in the auto-rotation dashboard that pauses rotation and lets me enter a new interval.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds or alternative approaches you've thought about.
+      placeholder: |
+        Currently I have to CTRL+C, restart auto-rotation, and enter a new interval.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: What area does this affect?
+      multiple: true
+      options:
+        - Runtime (ns-ghost.sh)
+        - Install / Update / Uninstall
+        - Bootstrap / cross-platform
+        - CLI or command flags
+        - Documentation
+        - Auto-rotation loop
+        - Health checks / diagnostics
+        - UI / Dashboard / Menus
+        - Process management
+        - Other (explain above)
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked [existing feature requests](https://github.com/naborajs/Termux-Tor-IP-Rotator/issues?q=is%3Aissue+label%3Aenhancement)
+          required: true
+        - label: My request is specific to Ghost Engine's scope (Tor routing / proxy / privacy toolkit)
+          required: true
+        - label: I'm willing to help implement or test this if needed
+          required: false

@@ -1,0 +1,107 @@
+name: 🐛 Bug Report
+description: Report something broken or misbehaving in Ghost Engine
+labels: [bug, needs-triage]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue.
+        Before you start, please check the [Troubleshooting Guide](../docs/TROUBLESHOOTING.md)
+        and the [FAQ](../README.md#-frequently-asked-questions) — your issue may already have a known fix.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear, concise description of the bug.
+      placeholder: |
+        Ghost Engine crashes when I try to start auto-rotation from the menu.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+      description: What did you expect Ghost Engine to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can someone else reproduce this?
+      placeholder: |
+        1. Install with `sh bootstrap.sh install`
+        2. Run `ns-ghost`
+        3. Select option 2 (Auto Rotate)
+        4. See error...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform are you running on?
+      options:
+        - Android / Termux
+        - Linux (Debian/Ubuntu)
+        - Linux (Arch)
+        - Linux (Fedora)
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - WSL / WSL2
+        - Other (specify below)
+    validations:
+      required: true
+
+  - type: input
+    id: platform_detail
+    attributes:
+      label: Environment details
+      description: OS version, kernel, Termux version, WSL version, etc.
+      placeholder: "e.g. Ubuntu 22.04 on WSL2, kernel 5.15.x"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Install method
+      options:
+        - bootstrap.sh install
+        - bash install.sh
+        - Manual / other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Ghost Engine version / commit
+      description: Run `git log --oneline -1` from the repo directory and paste the commit hash.
+      placeholder: "e.g. 3ce6c39 Added a banner of V5"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output / logs
+      description: |
+        Paste any terminal output, error messages, or health check results.
+        If possible, run `ns-ghost health` and include the output.
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the [Troubleshooting Guide](../docs/TROUBLESHOOTING.md) and FAQ
+          required: true
+        - label: I searched [existing issues](https://github.com/naborajs/Termux-Tor-IP-Rotator/issues) for similar reports
+          required: true
+        - label: I included platform details, logs, and reproduction steps
+          required: true

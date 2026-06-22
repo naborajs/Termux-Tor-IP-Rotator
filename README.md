@@ -147,6 +147,9 @@ sh bootstrap.sh uninstall   # Remove Ghost Engine
 > **Windows/WSL note:** If you edit shell scripts on Windows, Git may insert CRLF line endings.
 > The bootstrap and all installer scripts now include automatic CRLF self-healing.
 > See the **Shell Safety** section below for details.
+>
+> **New:** Full documentation is now available in the [docs/](docs/) directory — architecture, platform guides, quickstart, and troubleshooting.
+> See also [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [SUPPORT.md](SUPPORT.md).
 
 ---
 
