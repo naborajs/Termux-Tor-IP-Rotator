@@ -7,8 +7,8 @@ body:
     attributes:
       value: |
         Thanks for taking the time to report an issue.
-        Before you start, please check the [Troubleshooting Guide](../docs/TROUBLESHOOTING.md)
-        and the [FAQ](../README.md#-frequently-asked-questions) — your issue may already have a known fix.
+        Before you start, please check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+        and the [FAQ](README.md#-frequently-asked-questions) — your issue may already have a known fix.
 
   - type: textarea
     id: description
@@ -99,7 +99,7 @@ body:
     attributes:
       label: Before submitting
       options:
-        - label: I checked the [Troubleshooting Guide](../docs/TROUBLESHOOTING.md) and FAQ
+        - label: I checked the [Troubleshooting Guide](docs/TROUBLESHOOTING.md) and FAQ
           required: true
         - label: I searched [existing issues](https://github.com/naborajs/Termux-Tor-IP-Rotator/issues) for similar reports
           required: true

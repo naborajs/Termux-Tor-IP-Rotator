@@ -301,7 +301,7 @@ If the two IPs are different, Ghost Engine is routing through TOR successfully.
     through Ghost Engine’s local <code>Privoxy</code> HTTP proxy running inside Termux.
   </p>
 
-  <img src="assets\ANDROID_WIFI_PROXY_SETUP.jpeg" alt="Android Wi-Fi proxy setup for Ghost Engine" width="360" />
+  <img src="assets/ANDROID_WIFI_PROXY_SETUP.jpeg" alt="Android Wi-Fi proxy setup for Ghost Engine" width="360" />
   <br />
   <sub><b>Manual Wi-Fi proxy configuration on Android for Ghost Engine</b></sub>
 
@@ -789,7 +789,7 @@ bash uninstall.sh
 
 ---
 
-🪟 Windows (WSL2 Only)
+## 🪟 Windows (WSL2 Only)
 
 Ghost Engine runs inside **WSL2** (Windows Subsystem for Linux) and provides a proxy that Windows apps and browsers can use.
 
