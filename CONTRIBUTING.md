@@ -74,17 +74,15 @@ Termux-Tor-IP-Rotator/
 ├── assets/                     # Screenshots for README
 ├── docs/                       # Extended documentation
 │   ├── ARCHITECTURE.md         # How the engine works
-│   ├── INSTALL.md              # Platform-specific install guides
+│   ├── PLATFORMS.md            # Platform-specific install guides
 │   ├── QUICKSTART.md           # Getting started quickly
 │   ├── TROUBLESHOOTING.md      # Common issues and fixes
-│   ├── PLATFORMS.md            # Platform-specific notes
 │   └── RELEASING.md            # (maintainer) release workflow
 ├── ns-ghost.sh                 # The engine — main runtime
 ├── install.sh                  # Installer
 ├── update.sh                   # Updater
 ├── uninstall.sh                # Uninstaller
 ├── bootstrap.sh                # Bootstrap layer (CRLF fix + dispatch)
-├── bootstrap.sh                # (see shell safety below)
 ├── CONTRIBUTING.md             # This file
 ├── SECURITY.md                 # Security reporting
 ├── SUPPORT.md                  # Support resources

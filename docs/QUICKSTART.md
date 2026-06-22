@@ -24,7 +24,7 @@ cd Termux-Tor-IP-Rotator
 sh bootstrap.sh install
 ```
 
-> See [INSTALL.md](INSTALL.md) for platform-specific install details.
+> See [PLATFORMS.md](PLATFORMS.md) for platform-specific install details.
 
 ---
 

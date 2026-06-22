@@ -11,7 +11,7 @@ Most common questions are already answered:
 | Resource | What it covers |
 |----------|---------------|
 | [README](../README.md) | Project overview, quick install, FAQ, troubleshooting |
-| [Install Guide](docs/INSTALL.md) | Platform-specific install instructions |
+| [Platform Guide](docs/PLATFORMS.md) | Platform-specific install instructions |
 | [Quickstart Guide](docs/QUICKSTART.md) | Getting started quickly |
 | [Troubleshooting Guide](docs/TROUBLESHOOTING.md) | Common issues and fixes |
 | [FAQ](../README.md#-frequently-asked-questions) | Frequently asked questions in README |

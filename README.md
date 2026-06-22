@@ -148,7 +148,7 @@ sh bootstrap.sh uninstall   # Remove Ghost Engine
 > The bootstrap and all installer scripts now include automatic CRLF self-healing.
 > See the **Shell Safety** section below for details.
 >
-> **New:** Full documentation is now available in the [docs/](docs/) directory — architecture, platform guides, quickstart, and troubleshooting.
+> Full documentation is in the [docs/](docs/) directory — architecture, platform guides, quickstart, and troubleshooting.
 > See also [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [SUPPORT.md](SUPPORT.md).
 
 ---
@@ -693,7 +693,7 @@ Paste this inside:
 #!/usr/bin/env bash
 set -e
 
-echo "[*] Ghost Engine v4 — Auto Installer (Debian/Ubuntu)"
+echo "[*] Ghost Engine v5 — Auto Installer (Debian/Ubuntu)"
 echo
 
 # Check for sudo
@@ -716,7 +716,7 @@ sudo apt install -y git tor privoxy curl netcat || {
 # Clone repo if needed
 if [ ! -d "$HOME/Termux-Tor-IP-Rotator" ]; then
   echo "[*] Cloning repository..."
-  git clone https://github.com/ns-gamming/Termux-Tor-IP-Rotator "$HOME/Termux-Tor-IP-Rotator"
+  git clone https://github.com/naborajs/Termux-Tor-IP-Rotator "$HOME/Termux-Tor-IP-Rotator"
 else
   echo "[*] Repo already exists. Pulling latest changes..."
   cd "$HOME/Termux-Tor-IP-Rotator"
@@ -957,12 +957,13 @@ If Ghost Engine is not working as expected, use the table below to quickly ident
 
 If Ghost Engine stops working and you want the fastest recovery path, try this:
 
-### 1) Stop any old TOR / Privoxy processes
+### 1) Stop Ghost Engine cleanly
 
 ```bash id="c7r8vf"
-pkill tor 2>/dev/null
-pkill privoxy 2>/dev/null
+ns-ghost stop
 ```
+
+If the command is unavailable, use the engine's built-in cleanup or restart your terminal.
 
 ### 2) Start Ghost Engine again
 
