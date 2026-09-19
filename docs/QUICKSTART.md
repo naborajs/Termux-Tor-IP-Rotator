@@ -142,9 +142,9 @@ If they work, Ghost Engine is operational.
 
 Read the guide for your platform:
 
-- [Termux Guide](docs/termux.txt)
-- [WSL Guide](docs/wsl.txt)
-- [Linux Guide](docs/linux.txt)
+- [Termux Guide](termux.txt)
+- [WSL Guide](wsl.txt)
+- [Linux Guide](linux.txt)
 
 ---
 
