@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, fixes, 'ghost-engine-*' ]
+  pull_request:
+    branches: [ main, fixes ]
+
+jobs:
+  lint-and-validate:
+    name: Lint & Validate Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify line endings (LF only)
+        run: |
+          echo "Checking for CRLF line endings in shell scripts..."
+          if grep -l $'\r' *.sh; then
+            echo "ERROR: Found CRLF line endings in shell scripts. Must use Unix LF."
+            exit 1
+          fi
+          echo "All shell scripts use Unix LF line endings."
+
+      - name: Validate syntax (sh -n & bash -n)
+        run: |
+          echo "Checking POSIX syntax on bootstrap.sh..."
+          sh -n bootstrap.sh
+          echo "Checking Bash syntax on all scripts..."
+          bash -n bootstrap.sh install.sh update.sh uninstall.sh ns-ghost.sh
+          echo "Syntax check passed."
+
+      - name: Test bootstrap interface
+        run: |
+          sh bootstrap.sh
