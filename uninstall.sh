@@ -115,12 +115,24 @@ stop_services() {
 
     echo -e "${YELLOW}[1/5] Stopping Ghost Engine services...${RESET}"
 
+    # Stop via PID files first if present
+    local pidfile
+    for pidfile in "$BASE_DIR/tor.pid" "$BASE_DIR/privoxy.pid"; do
+        if [[ -f "$pidfile" ]]; then
+            local pid
+            pid=$(cat "$pidfile" 2>/dev/null || true)
+            if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+                kill "$pid" 2>/dev/null || true
+                sleep 0.5
+                kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true
+            fi
+            rm -f "$pidfile"
+        fi
+    done
+
+    # Scoped fallback targeting Ghost Engine's own runtime configuration
     pkill -f "tor.*${BASE_DIR}" 2>/dev/null || true
     pkill -f "privoxy.*${BASE_DIR}" 2>/dev/null || true
-
-    # Best-effort cleanup of local user processes
-    pkill tor 2>/dev/null || true
-    pkill privoxy 2>/dev/null || true
 
     echo -e "${GREEN}[OK] Running Tor/Privoxy processes stopped (if any).${RESET}"
     echo

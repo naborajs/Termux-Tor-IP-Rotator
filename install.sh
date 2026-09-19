@@ -197,7 +197,7 @@ disable_conflicting_services() {
 
 install_dependencies() {
 
-    echo -e "${YELLOW}[4/8] Installing dependencies...${RESET}"
+    echo -e "${YELLOW}[5/9] Installing dependencies...${RESET}"
 
     case "$PLATFORM" in
 
@@ -289,6 +289,13 @@ install_binary() {
     chmod +x "$BIN_DIR/$INSTALL_NAME"
 
     echo -e "${GREEN}[OK] Installed:${RESET} $BIN_DIR/$INSTALL_NAME"
+
+    if [[ -d "docs" ]]; then
+        mkdir -p "$HOME/.ns_ghost/docs"
+        cp -f docs/*.txt "$HOME/.ns_ghost/docs/" 2>/dev/null || true
+        echo -e "${GREEN}[OK] Documentation synced to:${RESET} $HOME/.ns_ghost/docs"
+    fi
+
     echo
 }
 
