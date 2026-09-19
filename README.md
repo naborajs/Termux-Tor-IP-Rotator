@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
   <br />
 
@@ -370,11 +370,11 @@ After enabling the proxy, open a browser on your Android device and visit:
 <h2 align="center"> Update & Removal Terminal Preview</h2>
 
 <p align="center">
-  <img src="assets/INSTALLER_PRIVEW.png" alt="Ghost Engine Installer Preview" width="1000">
+  <img src="assets/UPDATER_PRIVEW.png" alt="Ghost Engine Updater Preview" width="1000">
 </p>
 
 <p align="center">
-  <em>Ghost Engine installer setup flow — platform detection, dependency installation, binary setup, and guided onboarding.</em>
+  <em>Ghost Engine updater flow — branch tracking, commit comparison, fetch & rebase, and automated reinstallation.</em>
 </p>
 
 <br>
@@ -1697,7 +1697,7 @@ and thank you for keeping the Ghost alive 👻💙
 
 ---
 
-🏷 License
+## 🏷 License
 
 This project is licensed under the MIT License.
 You are free to use, modify, and redistribute — as long as proper credit is given.

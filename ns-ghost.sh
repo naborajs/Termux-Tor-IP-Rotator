@@ -1,3 +1,11 @@
+#!/usr/bin/env bash
+# Self-heal CRLF (portable): re-exec after stripping \r
+if grep -q $'\r' "$0" 2>/dev/null; then
+    tr -d '\r' < "$0" > "$0.tmp" 2>/dev/null || exit 1
+    mv "$0.tmp" "$0" 2>/dev/null || exit 1
+    exec bash "$0" "$@"
+fi
+
 # ==========================================================
 # 👻 GHOST ENGINE v5
 # NS GAMING • Advanced TOR Identity Framework
@@ -1831,7 +1839,7 @@ echo -e "${YELLOW}[+] Fetching URL through TOR...${RESET}"
 echo
 
 local RESPONSE_FILE
-RESPONSE_FILE=$(mktemp "/tmp/ghost_response_XXXXXX")
+RESPONSE_FILE=$(mktemp "${TMPDIR:-/tmp}/ghost_response_XXXXXX" 2>/dev/null || mktemp)
 
 HTTP_CODE=$(curl \
     --proxy "http://127.0.0.1:${PRIVOXY_PORT}" \
@@ -2060,6 +2068,14 @@ read -p $'Press ENTER to continue... ' _
 show_doc() {
 
     local FILE="$1"
+
+    if [[ ! -f "$FILE" ]]; then
+        local base_name
+        base_name="$(basename "$FILE")"
+        if [[ -f "$BASE_DIR/docs/$base_name" ]]; then
+            FILE="$BASE_DIR/docs/$base_name"
+        fi
+    fi
 
     clear
 
@@ -2455,6 +2471,8 @@ about_screen() {
 
 main_menu() {
 
+    trap cleanup_on_exit EXIT INT TERM
+
     while true; do
 
         clear
@@ -2585,7 +2603,7 @@ load_config
 security_hardening
 install_deps
 
-trap cleanup_on_exit EXIT INT TERM
+trap cleanup_on_exit INT TERM
 
 main() {
 
@@ -2606,10 +2624,12 @@ main() {
             echo -e "${GREEN}Ghost Engine started successfully.${RESET}"
             echo "SOCKS5: 127.0.0.1:${TOR_SOCKS_PORT}"
             echo "HTTP:   ${PROXY_HOST}:${PRIVOXY_PORT}"
+            exit 0
 
         else
 
             echo -e "${RED}Failed to start Ghost Engine.${RESET}" >&2
+            cleanup_on_exit
             exit 1
 
         fi

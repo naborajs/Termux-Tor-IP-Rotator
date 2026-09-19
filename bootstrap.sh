@@ -59,7 +59,12 @@ case "$CMD" in
             exit 1
         fi
 
-        exec sh "$BOOTSTRAP_DIR/$CMD.sh"
+        if ! command -v bash >/dev/null 2>&1; then
+            echo "[bootstrap] ERROR: 'bash' is required to run Ghost Engine scripts." >&2
+            exit 1
+        fi
+
+        exec bash "$BOOTSTRAP_DIR/$CMD.sh"
         ;;
 
     *)

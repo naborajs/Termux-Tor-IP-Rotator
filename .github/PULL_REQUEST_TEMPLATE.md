@@ -12,12 +12,13 @@
 - [ ] Bootstrap / cross-platform / CRLF safety
 - [ ] CLI flags or command dispatch
 - [ ] Documentation (README, docs/, templates)
+- [ ] CI/CD workflows (.github/workflows/)
 - [ ] Repository infrastructure (.github/, .gitattributes, etc.)
 - [ ] Other (explain below)
 
 ## What changed and why
 
-<!-- Describe the change and the reasoning behind it. -->
+<!-- Describe the change, the problem it solves, and the reasoning behind it. -->
 
 ## How was it tested?
 
@@ -36,13 +37,12 @@
 1. ...
 2. ...
 
-## Shell safety / line endings
+## Quality & safety checklist
 
-Shell scripts in this repo must use **LF line endings** (not CRLF).
-If you edited on Windows, please verify your editor is configured for LF.
-
-- [ ] I checked that changed `.sh` files have LF line endings
-- [ ] I ran `bash -n <file>` on any changed shell scripts (syntax check)
+- [ ] I checked that changed `.sh` files have **Unix LF line endings** (no CRLF `\r`)
+- [ ] I ran `bash -n <file>` (and `sh -n <file>` for POSIX scripts) on changed shell scripts
+- [ ] Process management is safely scoped (no global `pkill tor` or `pkill privoxy`)
+- [ ] All automated CI checks pass
 
 ## Documentation impact
 
@@ -57,3 +57,4 @@ If you edited on Windows, please verify your editor is configured for LF.
 ## Additional context
 
 <!-- Anything else reviewers should know. -->
+

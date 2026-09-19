@@ -173,6 +173,7 @@ reinstall_engine() {
     done
 
     chmod +x "$INSTALL_SCRIPT"
+    bash "$INSTALL_SCRIPT"
 
     echo
     echo -e "${GREEN}[OK] Installer completed.${RESET}"
