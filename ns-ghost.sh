@@ -82,6 +82,8 @@ DOCS_RECOMMEND="Quick Start"
 
 AUTO_ROTATE_RUNNING=false
 
+EXIT_COUNTRY="any"
+
 
 GREEN="\e[38;5;46m"
 CYAN="\e[38;5;51m"
@@ -126,6 +128,9 @@ load_config() {
             PRIVOXY_PORT)
                 [[ "$val" =~ ^[0-9]+$ ]] && PRIVOXY_PORT="$val"
                 ;;
+            EXIT_COUNTRY)
+                [[ "$val" =~ ^[a-zA-Z]{2}$ || "$val" == "any" ]] && EXIT_COUNTRY="$val"
+                ;;
         esac
 
     done < "$CONFIG_FILE"
@@ -145,8 +150,44 @@ AUTO_SAVE_LOGS=$AUTO_SAVE_LOGS
 TOR_SOCKS_PORT=$TOR_SOCKS_PORT
 TOR_CONTROL_PORT=$TOR_CONTROL_PORT
 PRIVOXY_PORT=$PRIVOXY_PORT
+EXIT_COUNTRY=$EXIT_COUNTRY
 EOF
 }
+
+validate_country_code() {
+    local code
+    code=$(echo "$1" | tr '[:lower:]' '[:upper:]')
+    [[ ! "$code" =~ ^[A-Z]{2}$ ]] && return 1
+    local known="AD AE AF AG AI AL AM AO AR AT AU AZ BA BB BD BE BF BG BH BI BJ BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CL CM CN CO CR CU CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FM FR GA GB GD GE GH GM GN GQ GR GT GW GY HK HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KI KM KN KP KR KW KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MH MK ML MM MN MO MR MT MU MV MW MX MY MZ NA NE NG NI NL NO NP NR NZ OM PA PE PG PH PK PL PT PW PY QA RO RS RU RW SA SB SC SD SE SG SI SK SL SM SN SO SR SS ST SV SY SZ TD TG TH TJ TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VN VU WS YE ZA ZM ZW"
+    for valid in $known; do
+        [[ "$code" == "$valid" ]] && return 0
+    done
+    return 1
+}
+
+set_exit_country() {
+    local country="$1"
+    if [[ "$country" == "any" || "$country" == "ANY" ]]; then
+        EXIT_COUNTRY="any"
+        save_config
+        echo -e "${GREEN}[SUCCESS] Exit country set to: any (all countries)${RESET}"
+        return 0
+    fi
+    if ! validate_country_code "$country"; then
+        echo -e "${RED}[ERROR] Invalid country code: $country${RESET}"
+        echo -e "${YELLOW}[INFO] Use ISO 3166-1 alpha-2 code (e.g., US, DE, FR) or 'any'${RESET}"
+        return 1
+    fi
+    EXIT_COUNTRY=$(echo "$country" | tr '[:lower:]' '[:upper:]')
+    save_config
+    echo -e "${GREEN}[SUCCESS] Exit country set to: $EXIT_COUNTRY${RESET}"
+    if check_tor; then
+        echo -e "${YELLOW}[INFO] Restart Ghost Engine for changes to take effect.${RESET}"
+        echo -e "${YELLOW}       Run: ns-ghost stop && ns-ghost start${RESET}"
+    fi
+    return 0
+}
+
 
 kill_pid_file() {
 
@@ -984,6 +1025,11 @@ AvoidDiskWrites 1
 DataDirectory ${TOR_DIR}/data
 EOF
 
+    if [[ "$EXIT_COUNTRY" != "any" && -n "$EXIT_COUNTRY" ]]; then
+        echo "ExitNodes {$EXIT_COUNTRY}" >> "$TORRC"
+        echo "StrictNodes 1" >> "$TORRC"
+    fi
+
     [[ "$SILENT" != "true" ]] && \
     echo -e "${YELLOW}[2/5] Starting TOR Service...${RESET}"
 
@@ -1376,6 +1422,7 @@ echo -e "━━━━━━━━━━━━━━━━━━━━━━━�
 printf "%-20s %s\n" "Platform:" "$PLATFORM_NAME"
 printf "%-20s %s\n" "Current IP:" "${CURRENT_IP:-UNKNOWN}"
 printf "%-20s %s\n" "Proxy:" "${PROXY_HOST}:${PRIVOXY_PORT}"
+printf "%-20s %s\n" "Exit Country:" "${EXIT_COUNTRY:-any}"
 
 echo
 
@@ -2253,6 +2300,7 @@ settings_menu() {
         echo "4) Toggle Auto Log Saving"
         echo "5) Clear Logs"
         echo "6) Clear IP History"
+        echo "7) Set Exit Country"
         echo
 
         echo "Current Duplicate Limit : $MAX_DUPLICATES"
@@ -2260,6 +2308,7 @@ settings_menu() {
         echo "Current Saved IPs       : ${#IP_HISTORY[@]}"
         echo "Matrix Effect           : $SHOW_MATRIX"
         echo "Auto Save Logs          : $AUTO_SAVE_LOGS"
+        echo "Exit Country            : $EXIT_COUNTRY"
         echo
 
         echo "0) Back"
@@ -2367,6 +2416,27 @@ settings_menu() {
                 sleep 2
                 ;;
 
+            7)
+
+                echo
+                echo -e "Current Exit Country: ${YELLOW}$EXIT_COUNTRY${RESET}"
+                read -p "Enter country code (e.g., US, DE, FR) or 'any': " new_country
+
+                if [[ "$new_country" == "any" || "$new_country" == "ANY" ]]; then
+                    EXIT_COUNTRY="any"
+                    save_config
+                    echo -e "${GREEN}[SUCCESS] Exit country set to: any${RESET}"
+                elif validate_country_code "$new_country"; then
+                    EXIT_COUNTRY=$(echo "$new_country" | tr '[:lower:]' '[:upper:]')
+                    save_config
+                    echo -e "${GREEN}[SUCCESS] Exit country set to: $EXIT_COUNTRY${RESET}"
+                else
+                    echo -e "${RED}[ERROR] Invalid country code.${RESET}"
+                fi
+
+                sleep 2
+                ;;
+
             0)
 
                 return
@@ -2411,6 +2481,7 @@ about_screen() {
     echo -e "Proxy Status    : $PROXY_STATUS"
     echo -e "Current Exit IP : $CURRENT_IP"
     echo -e "Proxy Endpoint  : ${PROXY_HOST}:${PRIVOXY_PORT}"
+echo -e "Exit Country   : ${EXIT_COUNTRY:-any}"
     echo
 
     echo -e "${GREEN}CORE FEATURES${RESET}"
@@ -2652,6 +2723,20 @@ main() {
         ;;
 
         rotate)
+            if [[ "${2:-}" == "--country" && -n "${3:-}" ]]; then
+                if validate_country_code "$3"; then
+                    EXIT_COUNTRY=$(echo "$3" | tr '[:lower:]' '[:upper:]')
+                    save_config
+                    echo -e "${GREEN}[INFO] Exit country set to: $EXIT_COUNTRY${RESET}"
+                    if check_tor; then
+                        stop_ghost_tor
+                        sleep 2
+                    fi
+                else
+                    echo -e "${RED}[ERROR] Invalid country code: $3${RESET}"
+                    exit 1
+                fi
+            fi
             single_rotate
             ;;
 
@@ -2677,6 +2762,24 @@ main() {
             check_ip
             ;;
 
+        config)
+            case "${2:-}" in
+                exit-country)
+                    if [[ -z "${3:-}" ]]; then
+                        echo "Current exit country: $EXIT_COUNTRY"
+                        echo "Usage: ns-ghost config exit-country <CODE|any>"
+                    else
+                        set_exit_country "$3"
+                    fi
+                    ;;
+                *)
+                    echo "Config options:"
+                    echo "  exit-country <CODE|any>  Set Tor exit node country"
+                    echo "  Current: $EXIT_COUNTRY"
+                    ;;
+            esac
+            ;;
+
         health|doctor)
             health_check
             ;;
@@ -2696,6 +2799,8 @@ main() {
             echo "  start         Start Tor + Privoxy engine"
             echo "  stop          Stop engine"
             echo "  rotate        Rotate TOR identity once"
+            echo "  rotate --country US  Rotate via specific country exit node"
+            echo "  config        Manage configuration (e.g., config exit-country US)"
             echo "  status        Show current engine status"
             echo "  ip            Check TOR IP"
             echo "  health        Run health diagnostics"
